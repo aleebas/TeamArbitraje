@@ -178,10 +178,9 @@ ticket_html = f"""
     <div class="whatsapp-ticket">
         <div class="ticket-header">👥 {titular_actual.upper()}</div>
         <div class="ticket-retenido-box">
-            <div class="ticket-retenido-label">🛡️ RETENIDO</div>
+            <div class="ticket-row"><span>🚀 ROI NETO:</span><b>{roi:,.2f}%</b></div>
             <div class="ticket-retenido-valor">{g_usdt:,.2f} USDT</div>
         </div>
-        <div class="ticket-row"><span>🚀 ROI NETO:</span><b>{roi:,.2f}%</b></div>
         <div class="ticket-row"><span>🏦 Banco:</span><b>{banco}</b></div>
         <div class="ticket-row"><span>📉 Compra Real:</span><b>Bs.{tr_b:,.2f}</b></div>
         <div class="ticket-row"><span>📈 Tasa Venta:</span><b>Bs.{tv:,.2f}</b></div>
