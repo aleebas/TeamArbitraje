@@ -60,7 +60,7 @@ st.markdown("""
 
 st.image("1774925854444.png", use_container_width=True)
 
-# Lógica de Estado
+# Lógica de Estado (Inmutable V16.5)
 if 'tasa_c' not in st.session_state: st.session_state.tasa_c = 570.0
 if 'cap_bs' not in st.session_state: st.session_state.cap_bs = 400000.0
 if 'usd_banco' not in st.session_state: st.session_state.usd_banco = 0.0
@@ -121,7 +121,7 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 st.session_state.c_asig_val = c_asig_bancamiga if banco == "BANCAMIGA" else c_asig_bdv
 
-# --- FLUJO VERTICAL ---
+# --- PASO 1, 2 Y 3 ---
 st.markdown("### 1️⃣ COMPRA EN BANCO")
 tasa_c = st.number_input("Tasa Compra", key="tasa_c", on_change=update_tasa)
 cap_bs = st.number_input("Capital (Bs.)", key="cap_bs", on_change=update_usd)
@@ -147,36 +147,33 @@ st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {usdt_recibidos:.2f} USDT</
 st.markdown("### 3️⃣ VENTA PARA RECUPERAR")
 tasa_v = st.number_input("Tasa Venta (Bs/USDT)", value=660.0)
 usdt_minimos_recuperar = cap_bs / tasa_v if tasa_v > 0 else 0.0
-
 st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{usdt_minimos_recuperar:.2f} USDT</b> para reponer los Bs. {cap_bs:,.2f}</div>', unsafe_allow_html=True)
 usdt_a_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(usdt_minimos_recuperar))
 
-# --- CÁLCULOS FINALES CON ESCUDO ANTI-NaN ---
-usdt_ganancia_final = usdt_recibidos - usdt_a_vender
-bs_recuperados_reales = usdt_a_vender * tasa_v
+# --- CÁLCULOS FINALES (BLOQUEADOS) ---
+ganancia_usdt = usdt_recibidos - usdt_a_vender
+bs_recup = usdt_a_vender * tasa_v
 
-# Cálculo de ROI con Blindaje
-if cap_bs > 0:
-    roi_raw = ((usdt_ganancia_final * tasa_v) / cap_bs) * 100
-    roi = roi_raw if math.isfinite(roi_raw) else 0.0
-else:
-    roi = 0.0
+# ESCUDO MATEMÁTICO: Forzar resultados a ser números válidos o 0.0
+def safe_val(val):
+    return val if math.isfinite(val) else 0.0
 
-# Cálculo de Brecha con Blindaje
-if tasa_real_b > 0:
-    brecha_raw = ((tasa_v / tasa_real_b) - 1) * 100
-    brecha = brecha_raw if math.isfinite(brecha_raw) else 0.0
-else:
-    brecha = 0.0
+brecha_num = safe_val(((tasa_v / tasa_real_b) - 1) * 100) if tasa_real_b > 0 else 0.0
+roi_num = safe_val(((ganancia_usdt * tasa_v) / cap_bs) * 100) if cap_bs > 0 else 0.0
+retenido_num = safe_val(ganancia_usdt)
 
-# Aseguramos que la ganancia no sea NaN para el ticket
-ganancia_ticket = usdt_ganancia_final if math.isfinite(usdt_ganancia_final) else 0.0
+# PRE-FORMATEO DE TEXTO PARA EL TICKET (Sincronización Total)
+t_brecha = "{:,.2f}%".format(brecha_num)
+t_roi = "{:,.2f}%".format(roi_num)
+t_retenido = "{:,.2f} USDT".format(retenido_num)
+t_compra = "Bs. {:,.2f}".format(tasa_real_b)
+t_venta = "Bs. {:,.2f}".format(tasa_v)
 
-# --- PANELES ---
+# --- PANEL DINÁMICO ---
 st.markdown(f"""
 <div class="panel-dinamico">
-    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:.2f}%</div></div>
-    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{roi:.2f}%</div></div>
+    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{t_brecha}</div></div>
+    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{t_roi}</div></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -185,23 +182,21 @@ col_stats1.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
 col_stats2.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
 col_stats3.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
 
-# --- TICKET FINAL CORREGIDO (Blindado contra NaN) ---
+# --- TICKET DEFINITIVO (ORDEN IMAGEN 3) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
         <div class="ticket-header">👥 {titular_actual}</div>
-        
         <div class="ticket-retenido-box">
             <div class="ticket-retenido-label">🛡️ RETENIDO</div>
-            <div class="ticket-retenido-valor">{ganancia_ticket:.2f} USDT</div>
+            <div class="ticket-retenido-valor">{t_retenido}</div>
         </div>
-        
-        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{roi:.2f}%</b></div>
+        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{t_roi}</b></div>
         <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><b class="ticket-value">{banco}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">Bs. {tasa_real_b:,.2f}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">Bs. {tasa_v:,.2f}</b></div>
+        <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">{t_compra}</b></div>
+        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">{t_venta}</b></div>
         <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><b class="ticket-value">{metodo}</b></div>
-        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{brecha:.2f}%</b></div>
+        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{t_brecha}</b></div>
     </div>
 </div>
 """
@@ -213,7 +208,7 @@ if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=Tr
         "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str,
         "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A",
         "Banco": banco, "Ruta": metodo, "USD_Comprados": usd_reales_b, 
-        "Ganancia_Bs": ganancia_ticket * tasa_v, "Usdt_Retenidos": round(ganancia_ticket, 2), "ROI_%": round(roi, 2)
+        "Ganancia_Bs": retenido_num * tasa_v, "Usdt_Retenidos": round(retenido_num, 2), "ROI_%": round(roi_num, 2)
     }])
     updated_df = pd.concat([df_h, nuevo], ignore_index=True)
     conn.update(data=updated_df)
