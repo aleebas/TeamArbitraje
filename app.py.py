@@ -18,7 +18,7 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL MÓVIL (Preservado V17.5) ---
+# --- ESTILO VISUAL MÓVIL V17.5 (Preservado) ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -48,13 +48,13 @@ st.markdown("""
     .ticket-wrapper { display: flex; justify-content: center; padding: 5px; margin-top: 5px; margin-bottom: 10px;}
     .whatsapp-ticket { background-color: #ffffff !important; border: 3px dashed #16a34a; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .whatsapp-ticket * { color: #000000 !important; } 
-    .ticket-header { text-align: center; font-size: 16px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
+    .ticket-header { text-align: center; font-size: 18px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
+    .ticket-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e2e8f0; }
     .ticket-label { font-size: 13px; font-weight: 700; color: #334155 !important; }
     .ticket-value { font-size: 14px; font-weight: 900; }
     .ticket-retenido-box { background-color: #f0fdf4 !important; padding: 8px; border-radius: 8px; border: 2px solid #16a34a; margin-bottom: 10px; text-align: center; }
     .ticket-retenido-label { font-size: 12px; font-weight: 700; color: #16a34a !important; }
-    .ticket-retenido-valor { font-size: 18px; font-weight: 900; color: #16a34a !important; }
+    .ticket-retenido-valor { font-size: 22px; font-weight: 900; color: #16a34a !important; }
     </style>
 """, unsafe_allow_html=True)
 
@@ -150,30 +150,30 @@ usdt_minimos_recuperar = cap_bs / tasa_v if tasa_v > 0 else 0.0
 st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{usdt_minimos_recuperar:.2f} USDT</b> para reponer los Bs. {cap_bs:,.2f}</div>', unsafe_allow_html=True)
 usdt_a_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(usdt_minimos_recuperar))
 
-# --- CÁLCULOS FINALES (BLOQUEADOS) ---
-ganancia_usdt = usdt_recibidos - usdt_a_vender
-bs_recup = usdt_a_vender * tasa_v
+# --- CÁLCULOS FINALES CON "SUPER-ESCUDO" ANTI-NaN ---
+ganancia_usdt_final = usdt_recibidos - usdt_a_vender
 
-# ESCUDO MATEMÁTICO: Forzar resultados a ser números válidos o 0.0
-def safe_val(val):
-    return val if math.isfinite(val) else 0.0
+# 1. Función de limpieza absoluta
+def clean(val):
+    if val is None or not math.isfinite(val): return 0.0
+    return float(val)
 
-brecha_num = safe_val(((tasa_v / tasa_real_b) - 1) * 100) if tasa_real_b > 0 else 0.0
-roi_num = safe_val(((ganancia_usdt * tasa_v) / cap_bs) * 100) if cap_bs > 0 else 0.0
-retenido_num = safe_val(ganancia_usdt)
+# 2. Cálculos crudos
+brecha_raw = ((tasa_v / tasa_real_b) - 1) * 100 if tasa_real_b > 0 else 0.0
+roi_raw = ((ganancia_usdt_final * tasa_v) / cap_bs) * 100 if cap_bs > 0 else 0.0
 
-# PRE-FORMATEO DE TEXTO PARA EL TICKET (Sincronización Total)
-t_brecha = "{:,.2f}%".format(brecha_num)
-t_roi = "{:,.2f}%".format(roi_num)
-t_retenido = "{:,.2f} USDT".format(retenido_num)
-t_compra = "Bs. {:,.2f}".format(tasa_real_b)
-t_venta = "Bs. {:,.2f}".format(tasa_v)
+# 3. Variables de seguridad (ESTAS VAN AL TICKET)
+v_brecha = clean(brecha_raw)
+v_roi = clean(roi_raw)
+v_retenido = clean(ganancia_usdt_final)
+v_compra = clean(tasa_real_b)
+v_venta = clean(tasa_v)
 
-# --- PANEL DINÁMICO ---
+# --- PANELES VISUALES ---
 st.markdown(f"""
 <div class="panel-dinamico">
-    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{t_brecha}</div></div>
-    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{t_roi}</div></div>
+    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{v_brecha:,.2f}%</div></div>
+    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{v_roi:,.2f}%</div></div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -182,33 +182,35 @@ col_stats1.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
 col_stats2.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
 col_stats3.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
 
-# --- TICKET DEFINITIVO (ORDEN IMAGEN 3) ---
+# --- TICKET FINAL: COPIA FIEL DE TU IMAGEN (ORDEN Y ICONOS) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
-        <div class="ticket-header">👥 {titular_actual}</div>
+        <div class="ticket-header">👥 {titular_actual.upper()}</div>
+        
         <div class="ticket-retenido-box">
             <div class="ticket-retenido-label">🛡️ RETENIDO</div>
-            <div class="ticket-retenido-valor">{t_retenido}</div>
+            <div class="ticket-retenido-valor">{v_retenido:,.2f} USDT</div>
         </div>
-        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{t_roi}</b></div>
+        
+        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{v_roi:,.2f}%</b></div>
         <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><b class="ticket-value">{banco}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">{t_compra}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">{t_venta}</b></div>
+        <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">Bs. {v_compra:,.2f}</b></div>
+        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">Bs. {v_venta:,.2f}</b></div>
         <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><b class="ticket-value">{metodo}</b></div>
-        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{t_brecha}</b></div>
+        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{v_brecha:,.2f}%</b></div>
     </div>
 </div>
 """
 st.write(ticket_html, unsafe_allow_html=True)
 
-# --- BOTONES Y REGISTROS ---
+# --- REGISTRO Y HISTORIAL ---
 if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
     nuevo = pd.DataFrame([{
         "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str,
         "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A",
         "Banco": banco, "Ruta": metodo, "USD_Comprados": usd_reales_b, 
-        "Ganancia_Bs": retenido_num * tasa_v, "Usdt_Retenidos": round(retenido_num, 2), "ROI_%": round(roi_num, 2)
+        "Ganancia_Bs": v_retenido * v_venta, "Usdt_Retenidos": round(v_retenido, 2), "ROI_%": round(v_roi, 2)
     }])
     updated_df = pd.concat([df_h, nuevo], ignore_index=True)
     conn.update(data=updated_df)
