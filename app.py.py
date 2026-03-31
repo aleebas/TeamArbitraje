@@ -5,201 +5,189 @@ from datetime import datetime
 import math
 
 # --- 1. CONFIGURACIÓN E INFRAESTRUCTURA ---
-st.set_page_config(page_title="TEAM ARBITRAJE PRO V20", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="TEAM ARBITRAJE ELITE", layout="wide", initial_sidebar_state="expanded")
+
+# PERSISTENCIA DE DATOS (Escudo anti-borrado de caché móvil)
+keys = ['tasa_c', 'cap_bs', 'usd_banco', 'tasa_u', 'tasa_v', 'u_vender', 'banco_sel', 'metodo_sel']
+for key in keys:
+    if key not in st.session_state:
+        if key == 'tasa_c': st.session_state[key] = 580.0
+        elif key == 'cap_bs': st.session_state[key] = 100000.0
+        elif key == 'tasa_u': st.session_state[key] = 1.033
+        elif key == 'tasa_v': st.session_state[key] = 680.0
+        elif key == 'banco_sel': st.session_state[key] = "BDV"
+        elif key == 'metodo_sel': st.session_state[key] = "ZINLI"
+        else: st.session_state[key] = 0.0
 
 conn = st.connection("gsheets", type=GSheetsConnection)
 
 def load_data():
-    try:
-        return conn.read(ttl="1s") 
-    except:
-        return pd.DataFrame(columns=["Fecha", "Día", "Mes", "Titular", "Cuenta_Zinli", "Banco", "Ruta", "USD_Comprados", "Ganancia_Bs", "Usdt_Retenidos", "ROI_%"])
+    try: return conn.read(ttl="1s")
+    except: return pd.DataFrame(columns=["Fecha", "Día", "Mes", "Titular", "Cuenta_Zinli", "Banco", "Ruta", "USD_Comprados", "Ganancia_Bs", "Usdt_Retenidos", "ROI_%"])
 
 df_h = load_data()
 
-# --- 2. ESTILO VISUAL MÓVIL (DISEÑO FINAL) ---
+# --- 2. LÓGICA BIDIRECCIONAL (Sincronización Total) ---
+def sync_to_usd():
+    comm = 0.008 if st.session_state.banco_sel == "BANCAMIGA" else 0.005
+    tr = st.session_state.tasa_c * (1 + comm)
+    if tr > 0: st.session_state.usd_banco = st.session_state.cap_bs / tr
+
+def sync_to_bs():
+    comm = 0.008 if st.session_state.banco_sel == "BANCAMIGA" else 0.005
+    tr = st.session_state.tasa_c * (1 + comm)
+    st.session_state.cap_bs = st.session_state.usd_banco * tr
+
+# --- 3. ESTILO VISUAL (Móvil y PC) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
-    .block-container { padding-top: 3.5rem !important; padding-bottom: 1rem !important; max-width: 98% !important; }
-    h3 { font-size: 1.2rem !important; margin-top: 1rem !important; color: #38bdf8 !important; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-    div[data-testid="stMetric"], div.stNumberInput, div.stRadio, div.stSelectbox {
-        background-color: #1e293b !important; padding: 5px 10px !important; border-radius: 8px !important; border: 1px solid #334155 !important;
-    }
-    .stNumberInput div div input { color: #f8fafc !important; background-color: #0f172a !important; border: 1px solid #475569 !important; font-weight: 900 !important; text-align: center !important; font-size: 1.1rem !important;}
-    .sugerencia-box { background-color: #064e3b; padding: 8px; border-radius: 8px; border: 1px solid #10b981; color: #a7f3d0; text-align: center; margin-bottom: 5px; font-size: 14px;}
-    .usdt-box { background-color: #1e3a8a; padding: 10px; border-radius: 8px; border: 1px solid #3b82f6; color: #bfdbfe; text-align: center; margin-top: 5px; margin-bottom: 15px; font-weight: 900; font-size: 18px;}
+    .stApp { background-color: #0b0f1a !important; color: #e2e8f0 !important; }
+    .block-container { padding-top: 2rem !important; max-width: 1100px !important; margin: 0 auto !important; }
     
-    @media (max-width: 768px) {
-        .top-controls [data-testid="column"] { width: 50% !important; flex: 1 1 50% !important; min-width: 50% !important; }
+    h3 { font-size: 1.3rem !important; color: #38bdf8 !important; border-left: 5px solid #38bdf8; padding-left: 10px; margin-top: 20px !important; }
+    
+    div[data-testid="stMetric"], div.stNumberInput, div.stRadio, div.stSelectbox {
+        background-color: #161e2e !important; border-radius: 12px !important; border: 1px solid #1f2937 !important; padding: 10px !important;
     }
-
-    .panel-dinamico { display: flex; justify-content: space-around; background: #020617; padding: 10px; border-radius: 10px; border: 1px solid #475569; margin: 15px 0 5px 0;}
+    
+    .stNumberInput div div input { font-size: 1.2rem !important; font-weight: 900 !important; color: #ffffff !important; text-align: center !important; }
+    
+    .sugerencia-box { background-color: #064e3b; padding: 10px; border-radius: 10px; border: 1px solid #10b981; color: #d1fae5; text-align: center; margin: 10px 0; font-size: 15px; }
+    .usdt-box { background-color: #1e3a8a; padding: 15px; border-radius: 12px; border: 1px solid #3b82f6; color: #dbeafe; text-align: center; margin: 15px 0; font-weight: 900; font-size: 20px; }
+    
+    .panel-dinamico { display: flex; justify-content: space-around; background: #111827; padding: 15px; border-radius: 15px; border: 1px solid #374151; margin: 20px 0; }
     .panel-item { text-align: center; }
-    .panel-titulo { font-size: 11px; color: #94a3b8; }
-    .panel-valor { font-size: 18px; font-weight: 900; color: #10b981; }
+    .panel-titulo { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
+    .panel-valor { font-size: 22px; font-weight: 900; color: #10b981; }
 
-    .ticket-wrapper { display: flex; justify-content: center; padding: 5px; margin-top: 5px; margin-bottom: 10px;}
-    .whatsapp-ticket { background-color: #ffffff !important; border: 3px dashed #16a34a; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .whatsapp-ticket * { color: #000000 !important; } 
-    .ticket-header { text-align: center; font-size: 18px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
-    .ticket-label { font-size: 13px; font-weight: 700; color: #334155 !important; }
-    .ticket-value { font-size: 14px; font-weight: 900; }
-    .ticket-retenido-box { background-color: #f0fdf4 !important; padding: 8px; border-radius: 8px; border: 2px solid #16a34a; margin-bottom: 10px; text-align: center; }
-    .ticket-retenido-label { font-size: 12px; font-weight: 700; color: #16a34a !important; }
-    .ticket-retenido-valor { font-size: 22px; font-weight: 900; color: #16a34a !important; }
-    .ticket-footer { text-align: center; font-size: 10px; color: #64748b !important; margin-top: 10px; font-style: italic; }
+    /* TICKET ESTILO WHATSAPP */
+    .whatsapp-ticket { background-color: #ffffff !important; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 2px solid #e2e8f0; }
+    .whatsapp-ticket * { color: #1e293b !important; }
+    .ticket-header { text-align: center; font-weight: 900; font-size: 18px; color: #059669 !important; border-bottom: 2px solid #10b981; padding-bottom: 8px; margin-bottom: 15px; }
+    .ticket-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
+    .ticket-label { font-weight: 700; font-size: 14px; }
+    .ticket-value { font-weight: 800; font-size: 14px; }
+    .ticket-profit-box { background-color: #ecfdf5 !important; border: 2px solid #10b981; border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 15px; }
+    .profit-label { font-size: 12px; font-weight: 700; color: #065f46 !important; }
+    .profit-val { font-size: 20px; font-weight: 900; color: #059669 !important; }
     </style>
 """, unsafe_allow_html=True)
 
+# Encabezado
 st.image("1774925854444.png", use_container_width=True)
 
-# --- 3. LÓGICA DE ESTADO ---
-if 'tasa_c' not in st.session_state: st.session_state.tasa_c = 570.0
-if 'cap_bs' not in st.session_state: st.session_state.cap_bs = 400000.0
-if 'usd_banco' not in st.session_state: st.session_state.usd_banco = 0.0
-if 'c_asig_val' not in st.session_state: st.session_state.c_asig_val = 0.005 
-
-def update_usd():
-    tr = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
-    if tr > 0: st.session_state.usd_banco = st.session_state.cap_bs / tr
-
-def update_bs():
-    tr = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
-    st.session_state.cap_bs = st.session_state.usd_banco * tr
-
-def update_tasa(): update_usd()
-
-hoy_str = datetime.now().strftime("%Y-%m-%d")
-mes_str = datetime.now().strftime("%Y-%m")
-
-# --- 4. SIDEBAR ---
-st.sidebar.header("👥 SELECCIÓN")
-titular_actual = st.sidebar.selectbox("Titular:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
-zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
+# --- 4. SIDEBAR (Límites y Comisiones) ---
+st.sidebar.header("👥 TITULAR Y CUENTA")
+titular = st.sidebar.selectbox("Operador:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
+zinli_id = st.sidebar.selectbox("Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
 
 st.sidebar.divider()
-st.sidebar.header("🛡️ LÍMITES")
-uso_d = df_h[(df_h['Día'] == hoy_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
-uso_m = df_h[(df_h['Mes'] == mes_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
-st.sidebar.metric(f"DÍA - {titular_actual}", f"$ {2000 - uso_d:,.2f}")
-st.sidebar.metric(f"MES - {titular_actual}", f"$ {10000 - uso_m:,.2f}")
+st.sidebar.header("🛡️ LÍMITES EN VIVO")
+hoy = datetime.now().strftime("%Y-%m-%d")
+mes = datetime.now().strftime("%Y-%m")
+
+uso_d = df_h[(df_h['Día'] == hoy) & (df_h['Titular'] == titular)]['USD_Comprados'].sum() if not df_h.empty else 0
+uso_m = df_h[(df_h['Mes'] == mes) & (df_h['Titular'] == titular)]['USD_Comprados'].sum() if not df_h.empty else 0
+st.sidebar.metric(f"Día - {titular}", f"$ {2000 - uso_d:,.2f}")
+st.sidebar.metric(f"Mes - {titular}", f"$ {10000 - uso_m:,.2f}")
 
 st.sidebar.divider()
-c_asig_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
-c_asig_bancamiga = st.sidebar.number_input("% Asig. Bancamiga", value=0.80) / 100
-c_tarjeta = st.sidebar.number_input("% Uso Tarjeta", value=2.50) / 100
-c_zinli_com = st.sidebar.number_input("% Comisión Zinli", value=3.75) / 100
-c_envio_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
-fijo_z = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
-c_bin_dep = st.sidebar.number_input("% Comis. Binance", value=3.30) / 100
+c_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
+c_bam = st.sidebar.number_input("% Asig. Bancamiga", value=0.80) / 100
+c_tarj = st.sidebar.number_input("% Uso Tarjeta", value=2.50) / 100
+c_zin_c = st.sidebar.number_input("% Com. Zinli", value=3.75) / 100
+c_env_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
+f_zin = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
+c_bin = st.sidebar.number_input("% Com. Binance", value=3.30) / 100
 
-# --- 5. CUERPO PRINCIPAL ---
-st.markdown('<div class="top-controls">', unsafe_allow_html=True)
+# --- 5. CUERPO DE OPERACIÓN ---
 col_h1, col_h2 = st.columns(2)
-with col_h1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
-with col_h2: metodo = st.radio("📍 Mecanismo:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
-st.markdown('</div>', unsafe_allow_html=True)
+with col_h1: st.session_state.banco_sel = st.radio("🏦 Banco:", ["BDV", "BANCAMIGA"], horizontal=True)
+with col_h2: st.session_state.metodo_sel = st.radio("📍 Ruta:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
 
-st.session_state.c_asig_val = c_asig_bancamiga if banco == "BANCAMIGA" else c_asig_bdv
+st.divider()
 
-# PASO 1
-st.markdown("### 1️⃣ COMPRA EN BANCO")
-tc = st.number_input("Tasa Compra", key="tasa_c", on_change=update_tasa)
-c_bs = st.number_input("Capital (Bs.)", key="cap_bs", on_change=update_usd)
-u_b = st.number_input(f"USD en {banco}", key="usd_banco", on_change=update_bs)
-tr_b = tc * (1 + st.session_state.c_asig_val)
+# PASO 1: COMPRA (BIDIRECCIONAL)
+st.markdown("### 1️⃣ PASO: COMPRA EN BANCO")
+col_b1, col_b2 = st.columns(2)
+with col_b1:
+    st.number_input("Tasa de Compra (BCV)", key="tasa_c", on_change=sync_to_usd)
+    st.number_input("Monto en Bolívares (Bs.)", key="cap_bs", on_change=sync_to_usd)
+with col_b2:
+    st.number_input(f"USD a comprar en {st.session_state.banco_sel}", key="usd_banco", on_change=sync_to_bs)
+    com_actual = c_bam if st.session_state.banco_sel == "BANCAMIGA" else c_bdv
+    tr_banco = st.session_state.tasa_c * (1 + com_actual)
+    st.info(f"Tasa Real con Comisión: Bs. {tr_banco:,.2f}")
 
-# PASO 2
-st.markdown("### 2️⃣ MOVIMIENTO Y CONVERSIÓN")
-if metodo == "ZINLI":
-    m_sug = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Recarga {zinli_actual}: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
-    u_neto_z = st.number_input("NETO Zinli (Exacto)", value=float(m_sug))
-    t_u = st.number_input("Tasa P2P (USD/USDT)", value=1.033, format="%.3f")
-    u_recibidos = float(((u_neto_z - fijo_z) / (1 + c_envio_z)) / t_u) if t_u > 0 else 0.0
-    u_alt = float((u_b - 1.0) / (1 + c_tarjeta)) * (1 - c_bin_dep)
+# PASO 2: MOVIMIENTO
+st.markdown("### 2️⃣ PASO: MOVIMIENTO Y P2P")
+if st.session_state.metodo_sel == "ZINLI":
+    sug_rec = (st.session_state.usd_banco - 1.0) / (1 + c_zin_c + c_tarj)
+    st.markdown(f'<div class="sugerencia-box">💡 RECARGA SUGERIDA EN {zinli_id}: <b>$ {sug_rec:,.2f}</b></div>', unsafe_allow_html=True)
+    u_neto = st.number_input("Neto en Zinli (Confirmado)", value=float(sug_rec))
+    t_p2p = st.number_input("Tasa P2P (USD/USDT)", key="tasa_u")
+    u_recibidos = ((u_neto - f_zin) / (1 + c_env_z)) / t_p2p if t_p2p > 0 else 0
 else:
-    m_sug = (u_b - 1.0) / (1 + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Tarjeta: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
-    u_dir = st.number_input("USD Gastados de Tarjeta", value=float(m_sug))
-    u_recibidos = float(u_dir * (1 - c_bin_dep))
-    m_s_z = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
-    u_alt = float(((m_s_z - fijo_z) / (1 + c_envio_z)) / 1.033)
+    sug_tar = (st.session_state.usd_banco - 1.0) / (1 + c_tarj)
+    st.markdown(f'<div class="sugerencia-box">💡 MONTO SUGERIDO TARJETA: <b>$ {sug_tar:,.2f}</b></div>', unsafe_allow_html=True)
+    u_dir = st.number_input("USD Gastados con Tarjeta", value=float(sug_tar))
+    u_recibidos = u_dir * (1 - c_bin)
 
-st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {u_recibidos:.2f} USDT</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS EN BINANCE: {u_recibidos:,.2f} USDT</div>', unsafe_allow_html=True)
 
-# PASO 3
-st.markdown("### 3️⃣ VENTA PARA RECUPERAR")
-tv = st.number_input("Tasa Venta (Bs/USDT)", value=660.0)
-u_min_rec = c_bs / tv if tv > 0 else 0.0
-st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{u_min_rec:.2f} USDT</b> para reponer los Bs. {c_bs:,.2f}</div>', unsafe_allow_html=True)
-u_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(u_min_rec))
+# PASO 3: VENTA
+st.markdown("### 3️⃣ PASO: VENTA Y CIERRE")
+t_venta = st.number_input("Tasa de Venta P2P (Bs.)", key="tasa_v")
+u_para_rep = st.session_state.cap_bs / t_venta if t_venta > 0 else 0
+st.markdown(f'<div class="sugerencia-box">⚠️ Vende mínimo <b>{u_para_rep:,.2f} USDT</b> para recuperar tu capital.</div>', unsafe_allow_html=True)
+u_vendidos = st.number_input("USDT Vendidos para reponer Bs.", value=float(u_para_rep))
 
-# --- 6. CÁLCULOS FINALES (ULTRA-BLINDADOS) ---
-def final_clean(v):
-    try:
-        val = float(v)
-        return val if math.isfinite(val) else 0.0
-    except: return 0.0
+# --- 6. RESULTADOS Y TICKET ---
+g_usdt = u_recibidos - u_vendidos
+g_bs = g_usdt * t_venta
+roi = (g_bs / st.session_state.cap_bs) * 100 if st.session_state.cap_bs > 0 else 0
+brecha = ((t_venta / tr_banco) - 1) * 100 if tr_banco > 0 else 0
 
-g_usdt = final_clean(u_recibidos - u_vender)
-brecha = final_clean(((tv / tr_b) - 1) * 100 if tr_b > 0 else 0.0)
-roi = final_clean(((g_usdt * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
-roi_alt = final_clean((((u_alt - u_vender) * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
-ruta_alt_txt = "Tarjeta Directa" if metodo == "ZINLI" else "Zinli"
-
-# --- 7. PANELES DINÁMICOS Y ESTADÍSTICAS ---
+# PANEL DINÁMICO
 st.markdown(f"""
 <div class="panel-dinamico">
-    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:,.2f}%</div></div>
+    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA</div><div class="panel-valor">{brecha:,.2f}%</div></div>
     <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{roi:,.2f}%</div></div>
 </div>
 """, unsafe_allow_html=True)
 
-if not df_h.empty:
-    df_hoy = df_h[df_h['Día'] == hoy_str]
-    gan_bs_h, gan_usd_h, gan_usd_t = df_hoy['Ganancia_Bs'].sum(), df_hoy['Usdt_Retenidos'].sum(), df_h['Usdt_Retenidos'].sum()
-else: gan_bs_h, gan_usd_h, gan_usd_t = 0, 0, 0
-
-col_s1, col_s2, col_s3 = st.columns(3)
-col_s1.metric("Ganancia Hoy (Bs)", f"Bs.{gan_bs_h:,.0f}")
-col_s2.metric("Retenido Hoy (USDT)", f"{gan_usd_h:,.2f}")
-col_s3.metric("🔥 ACUMULADO", f"{gan_usd_t:,.2f}")
-
-# --- 8. TICKET FINAL (PERFECCIONADO) ---
-ticket_html = f"""
-<div class="ticket-wrapper">
-    <div class="whatsapp-ticket">
-        <div class="ticket-header">👥 {titular_actual.upper()}</div>
-        <div class="ticket-retenido-box">
-            <div class="ticket-retenido-label">🛡️ RETENIDO</div>
-            <div class="ticket-retenido-valor">{g_usdt:,.2f} USDT</div>
-        </div>
-        <div class="ticket-row"><span>🚀 ROI NETO:</span><b>{roi:,.2f}%</b></div>
-        <div class="ticket-row"><span>🏦 Banco:</span><b>{banco}</b></div>
-        <div class="ticket-row"><span>📉 Compra Real:</span><b>Bs.{tr_b:,.2f}</b></div>
-        <div class="ticket-row"><span>📈 Tasa Venta:</span><b>Bs.{tv:,.2f}</b></div>
-        <div class="ticket-row"><span>📍 Ruta:</span><b>{metodo}</b></div>
-        <div class="ticket-row" style="border:none;"><span>↔️ Brecha:</span><b>{brecha:,.2f}%</b></div>
-        <div class="ticket-footer">ROI comparativo con {ruta_alt_txt}: {roi_alt:,.2f}%</div>
+# TICKET WHATSAPP
+ticket = f"""
+<div class="whatsapp-ticket">
+    <div class="ticket-header">👥 {titular.upper()} - {zinli_id}</div>
+    <div class="ticket-profit-box">
+        <div class="profit-label">💰 GANANCIA POR VUELTA</div>
+        <div class="profit-val">{g_usdt:,.2f} USDT / Bs. {g_bs:,.2f}</div>
     </div>
+    <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><span class="ticket-value">{roi:,.2f}%</span></div>
+    <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><span class="ticket-value">{st.session_state.banco_sel}</span></div>
+    <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><span class="ticket-value">Bs. {tr_banco:,.2f}</span></div>
+    <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><span class="ticket-value">Bs. {t_venta:,.2f}</span></div>
+    <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><span class="ticket-value">{st.session_state.metodo_sel}</span></div>
+    <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><span class="ticket-value">{brecha:,.2f}%</span></div>
 </div>
 """
-st.write(ticket_html, unsafe_allow_html=True)
+st.write(ticket, unsafe_allow_html=True)
 
+# REGISTRO
 if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
-    nuevo = pd.DataFrame([{"Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str, "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A", "Banco": banco, "Ruta": metodo, "USD_Comprados": u_b, "Ganancia_Bs": g_usdt * tv, "Usdt_Retenidos": round(g_usdt, 2), "ROI_%": round(roi, 2)}])
-    updated_df = pd.concat([df_h, nuevo], ignore_index=True)
-    conn.update(data=updated_df)
+    nuevo = pd.DataFrame([{
+        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy, "Mes": mes,
+        "Titular": titular, "Cuenta_Zinli": zinli_id if st.session_state.metodo_sel == 'ZINLI' else "N/A",
+        "Banco": st.session_state.banco_sel, "Ruta": st.session_state.metodo_sel, "USD_Comprados": st.session_state.usd_banco, 
+        "Ganancia_Bs": g_bs, "Usdt_Retenidos": round(g_usdt, 2), "ROI_%": round(roi, 2)
+    }])
+    updated = pd.concat([df_h, nuevo], ignore_index=True)
+    conn.update(data=updated)
     st.success("¡Operación Registrada!")
     st.rerun()
 
+# HISTORIAL
 st.divider()
-with st.expander("📚 VER / EDITAR HISTORIAL"):
-    df_ed = st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True)
-    if st.button("🛠️ Sincronizar Cambios"):
-        conn.update(data=df_ed)
-        st.success("¡Base de datos sincronizada!")
-        st.rerun()
+with st.expander("📚 VER HISTORIAL COMPLETO"):
+    st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True)
