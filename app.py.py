@@ -17,7 +17,7 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL MÓVIL AVANZADO V17.5 ---
+# --- ESTILO VISUAL MÓVIL AVANZADO V17.5+ (Preservado) ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -95,7 +95,7 @@ def update_tasa(): update_usd()
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 
-# --- CÁLCULO DE ESTADÍSTICAS GLOBALES (Necesario para Sidebar y Zona Central) ---
+# --- CÁLCULO DE ESTADÍSTICAS GLOBALES ---
 if not df_h.empty:
     df_hoy = df_h[df_h['Día'] == hoy_str]
     ganancia_bs_hoy = df_hoy['Ganancia_Bs'].sum()
@@ -104,7 +104,7 @@ if not df_h.empty:
 else:
     ganancia_bs_hoy, ganancia_usd_hoy, ganancia_usd_total = 0, 0, 0
 
-# --- SIDEBAR (Móvil y Compacto V17.5) ---
+# --- SIDEBAR (Preservado) ---
 st.sidebar.header("👥 SELECCIÓN DE CUENTAS")
 titular_actual = st.sidebar.selectbox("Titular Actual:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
 zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
@@ -120,7 +120,6 @@ st.sidebar.metric(f"MES - {titular_actual}", f"$ {10000 - uso_mes_banco:,.2f}")
 st.sidebar.metric(f"MES - {zinli_actual}", f"$ {1000 - uso_mes_zinli:,.2f}")
 
 st.sidebar.divider()
-# Panel de estadísticas removed del sidebar por pedido del usuario V17.5
 c_asig_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
 c_asig_bancamiga = st.sidebar.number_input("% Asig. Bancamiga", value=0.80) / 100
 c_tarjeta = st.sidebar.number_input("% Uso Tarjeta", value=2.50) / 100
@@ -171,13 +170,23 @@ st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{usdt_m
 # CONTROL MANUAL DE VENTA (PRESERVADO)
 usdt_a_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(usdt_minimos_recuperar))
 
-# --- CÁLCULOS FINALES ---
+# --- CÁLCULOS FINALES Y BLINDAJE ANTI-NaN (CORRECCIÓN V17.6) ---
 usdt_ganancia_final = usdt_recibidos - usdt_a_vender
 bs_recuperados_reales = usdt_a_vender * tasa_v
-roi = ((usdt_ganancia_final * tasa_v) / cap_bs) * 100
-brecha = ((tasa_v / tasa_real_b) - 1) * 100
 
-# --- PANEL DINÁMICO (BRECHA Y ROI NETO V17.5) ---
+# Blindaje para ROI (evita división por cero si cap_bs es 0)
+if cap_bs > 0:
+    roi = ((usdt_ganancia_final * tasa_v) / cap_bs) * 100
+else:
+    roi = 0.00
+
+# Blindaje para Brecha (evita división por cero si tasa_real_b es 0)
+if tasa_real_b > 0:
+    brecha = ((tasa_v / tasa_real_b) - 1) * 100
+else:
+    brecha = 0.00
+
+# --- PANEL DINÁMICO (PRESERVADO) ---
 st.markdown(f"""
 <div class="panel-dinamico">
     <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:.2f}%</div></div>
@@ -185,13 +194,13 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# --- PANEL ESTADÍSTICAS MOVIDO (JUSTO DEBAJO DE BRECHA/ROI V17.5) ---
+# --- PANEL ESTADÍSTICAS GLOBALES (JUSTO DEBAJO DE BRECHA/ROI V17.5) ---
 col_stats1, col_stats2, col_stats3 = st.columns(3)
 col_stats1.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
 col_stats2.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
 col_stats3.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
 
-# --- NUEVO TICKET MODIFICADO (ORDEN Y CONTENIDO SEGÚN IMAGEN V17.5) ---
+# --- NUEVO TICKET MODIFICADO (CORREGIDO V17.6) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
