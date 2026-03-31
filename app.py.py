@@ -18,7 +18,7 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL MÓVIL V17.5 (Preservado) ---
+# --- ESTILO VISUAL MÓVIL (Preservado V17.5) ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -49,59 +49,56 @@ st.markdown("""
     .whatsapp-ticket { background-color: #ffffff !important; border: 3px dashed #16a34a; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     .whatsapp-ticket * { color: #000000 !important; } 
     .ticket-header { text-align: center; font-size: 18px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e2e8f0; }
+    .ticket-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
     .ticket-label { font-size: 13px; font-weight: 700; color: #334155 !important; }
     .ticket-value { font-size: 14px; font-weight: 900; }
     .ticket-retenido-box { background-color: #f0fdf4 !important; padding: 8px; border-radius: 8px; border: 2px solid #16a34a; margin-bottom: 10px; text-align: center; }
     .ticket-retenido-label { font-size: 12px; font-weight: 700; color: #16a34a !important; }
     .ticket-retenido-valor { font-size: 22px; font-weight: 900; color: #16a34a !important; }
+    .ticket-footer { text-align: center; font-size: 10px; color: #64748b !important; margin-top: 10px; font-style: italic; }
     </style>
 """, unsafe_allow_html=True)
 
 st.image("1774925854444.png", use_container_width=True)
 
-# Lógica de Estado (Inmutable V16.5)
+# Lógica de Estado (Inmutable)
 if 'tasa_c' not in st.session_state: st.session_state.tasa_c = 570.0
 if 'cap_bs' not in st.session_state: st.session_state.cap_bs = 400000.0
 if 'usd_banco' not in st.session_state: st.session_state.usd_banco = 0.0
 if 'c_asig_val' not in st.session_state: st.session_state.c_asig_val = 0.005 
 
 def update_usd():
-    tasa_real = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
-    if tasa_real > 0: st.session_state.usd_banco = st.session_state.cap_bs / tasa_real
+    tr = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
+    if tr > 0: st.session_state.usd_banco = st.session_state.cap_bs / tr
 
 def update_bs():
-    tasa_real = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
-    st.session_state.cap_bs = st.session_state.usd_banco * tasa_real
+    tr = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
+    st.session_state.cap_bs = st.session_state.usd_banco * tr
 
 def update_tasa(): update_usd()
 
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 
-# --- ESTADÍSTICAS GLOBALES ---
+# --- SIDEBAR ---
 if not df_h.empty:
     df_hoy = df_h[df_h['Día'] == hoy_str]
-    ganancia_bs_hoy = df_hoy['Ganancia_Bs'].sum()
-    ganancia_usd_hoy = df_hoy['Usdt_Retenidos'].sum()
-    ganancia_usd_total = df_h['Usdt_Retenidos'].sum()
+    gan_bs_h = df_hoy['Ganancia_Bs'].sum()
+    gan_usd_h = df_hoy['Usdt_Retenidos'].sum()
+    gan_usd_t = df_h['Usdt_Retenidos'].sum()
 else:
-    ganancia_bs_hoy, ganancia_usd_hoy, ganancia_usd_total = 0, 0, 0
+    gan_bs_h, gan_usd_h, gan_usd_t = 0, 0, 0
 
-# --- SIDEBAR ---
-st.sidebar.header("👥 SELECCIÓN DE CUENTAS")
-titular_actual = st.sidebar.selectbox("Titular Actual:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
+st.sidebar.header("👥 SELECCIÓN")
+titular_actual = st.sidebar.selectbox("Titular:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
 zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
 
 st.sidebar.divider()
-st.sidebar.header("🛡️ LÍMITES EN VIVO")
-uso_dia_banco = df_h[(df_h['Día'] == hoy_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
-uso_mes_banco = df_h[(df_h['Mes'] == mes_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
-uso_mes_zinli = df_h[(df_h['Mes'] == mes_str) & (df_h['Cuenta_Zinli'] == zinli_actual) & (df_h['Ruta'] == 'ZINLI')]['USD_Comprados'].sum() if not df_h.empty else 0
-
-st.sidebar.metric(f"DÍA - {titular_actual}", f"$ {2000 - uso_dia_banco:,.2f}")
-st.sidebar.metric(f"MES - {titular_actual}", f"$ {10000 - uso_mes_banco:,.2f}")
-st.sidebar.metric(f"MES - {zinli_actual}", f"$ {1000 - uso_mes_zinli:,.2f}")
+st.sidebar.header("🛡️ LÍMITES")
+uso_d = df_h[(df_h['Día'] == hoy_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
+uso_m = df_h[(df_h['Mes'] == mes_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum() if not df_h.empty else 0
+st.sidebar.metric(f"DÍA - {titular_actual}", f"$ {2000 - uso_d:,.2f}")
+st.sidebar.metric(f"MES - {titular_actual}", f"$ {10000 - uso_m:,.2f}")
 
 st.sidebar.divider()
 c_asig_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
@@ -112,115 +109,104 @@ c_envio_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
 fijo_z = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
 c_bin_dep = st.sidebar.number_input("% Comis. Binance", value=3.30) / 100
 
-# --- CONTROLES SUPERIORES ---
+# --- CONTROLES ---
 st.markdown('<div class="top-controls">', unsafe_allow_html=True)
-col_head1, col_head2 = st.columns(2)
-with col_head1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
-with col_head2: metodo = st.radio("📍 Mecanismo:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
+col_h1, col_h2 = st.columns(2)
+with col_h1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
+with col_h2: metodo = st.radio("📍 Mecanismo:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
 st.session_state.c_asig_val = c_asig_bancamiga if banco == "BANCAMIGA" else c_asig_bdv
 
 # --- PASO 1, 2 Y 3 ---
-st.markdown("### 1️⃣ COMPRA EN BANCO")
-tasa_c = st.number_input("Tasa Compra", key="tasa_c", on_change=update_tasa)
-cap_bs = st.number_input("Capital (Bs.)", key="cap_bs", on_change=update_usd)
-usd_reales_b = st.number_input(f"USD en {banco}", key="usd_banco", on_change=update_bs)
-tasa_real_b = st.session_state.tasa_c * (1 + st.session_state.c_asig_val)
+st.markdown("### 1️⃣ COMPRA")
+tc = st.number_input("Tasa Compra", key="tasa_c", on_change=update_tasa)
+c_bs = st.number_input("Capital (Bs.)", key="cap_bs", on_change=update_usd)
+u_b = st.number_input(f"USD en {banco}", key="usd_banco", on_change=update_bs)
+tr_b = tc * (1 + st.session_state.c_asig_val)
 
-st.markdown("### 2️⃣ MOVIMIENTO Y CONVERSIÓN")
+st.markdown("### 2️⃣ MOVIMIENTO")
+# Cálculo de la ruta actual
 if metodo == "ZINLI":
-    monto_rec_sug = (usd_reales_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Recarga {zinli_actual}: <b>$ {monto_rec_sug:,.2f}</b></div>', unsafe_allow_html=True)
-    usd_netos_zinli = st.number_input("NETO Zinli (Exacto)", value=float(monto_rec_sug))
-    oferta_p2p = (usd_netos_zinli - fijo_z) / (1 + c_envio_z)
-    tasa_u = st.number_input("Tasa P2P (USD/USDT)", value=1.033, format="%.3f")
-    usdt_recibidos = float(oferta_p2p / tasa_u) if tasa_u > 0 else 0.0
+    m_sug = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
+    st.markdown(f'<div class="sugerencia-box">Sugerencia: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
+    u_neto_z = st.number_input("NETO Zinli", value=float(m_sug))
+    u_recibidos = float(((u_neto_z - fijo_z) / (1 + c_envio_z)) / 1.033)
+    # Cálculo Alternativo (Tarjeta Directa) para el pie de página
+    u_alt = float((u_b - 1.0) / (1 + c_tarjeta)) * (1 - c_bin_dep)
 else:
-    sugerido_t = (usd_reales_b - 1.0) / (1 + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Tarjeta: <b>$ {sugerido_t:,.2f}</b></div>', unsafe_allow_html=True)
-    usd_directo = st.number_input("USD Gastados de Tarjeta", value=float(sugerido_t))
-    usdt_recibidos = float(usd_directo * (1 - c_bin_dep))
+    m_sug = (u_b - 1.0) / (1 + c_tarjeta)
+    st.markdown(f'<div class="sugerencia-box">Sugerencia: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
+    u_dir = st.number_input("USD Tarjeta", value=float(m_sug))
+    u_recibidos = float(u_dir * (1 - c_bin_dep))
+    # Cálculo Alternativo (Zinli) para el pie de página
+    m_sug_z = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
+    u_alt = float(((m_sug_z - fijo_z) / (1 + c_envio_z)) / 1.033)
 
-st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {usdt_recibidos:.2f} USDT</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {u_recibidos:.2f} USDT</div>', unsafe_allow_html=True)
 
-st.markdown("### 3️⃣ VENTA PARA RECUPERAR")
-tasa_v = st.number_input("Tasa Venta (Bs/USDT)", value=660.0)
-usdt_minimos_recuperar = cap_bs / tasa_v if tasa_v > 0 else 0.0
-st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{usdt_minimos_recuperar:.2f} USDT</b> para reponer los Bs. {cap_bs:,.2f}</div>', unsafe_allow_html=True)
-usdt_a_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(usdt_minimos_recuperar))
+st.markdown("### 3️⃣ VENTA")
+tv = st.number_input("Tasa Venta", value=660.0)
+u_vender = st.number_input("USDT a Vender", value=float(c_bs / tv if tv > 0 else 0.0))
 
-# --- CÁLCULOS FINALES CON "SUPER-ESCUDO" ANTI-NaN ---
-ganancia_usdt_final = usdt_recibidos - usdt_a_vender
+# --- CÁLCULOS CRÍTICOS (LIMPIEZA TOTAL) ---
+def final_clean(v):
+    return v if math.isfinite(v) else 0.0
 
-# 1. Función de limpieza absoluta
-def clean(val):
-    if val is None or not math.isfinite(val): return 0.0
-    return float(val)
+g_usdt = final_clean(u_recibidos - u_vender)
+brecha = final_clean(((tv / tr_b) - 1) * 100 if tr_b > 0 else 0.0)
+roi = final_clean(((g_usdt * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
 
-# 2. Cálculos crudos
-brecha_raw = ((tasa_v / tasa_real_b) - 1) * 100 if tasa_real_b > 0 else 0.0
-roi_raw = ((ganancia_usdt_final * tasa_v) / cap_bs) * 100 if cap_bs > 0 else 0.0
+# Cálculo de ROI Alternativo (letra pequeña)
+roi_alt = final_clean((((u_alt - u_vender) * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
+ruta_alt = "Tarjeta Directa" if metodo == "ZINLI" else "Zinli"
 
-# 3. Variables de seguridad (ESTAS VAN AL TICKET)
-v_brecha = clean(brecha_raw)
-v_roi = clean(roi_raw)
-v_retenido = clean(ganancia_usdt_final)
-v_compra = clean(tasa_real_b)
-v_venta = clean(tasa_v)
-
-# --- PANELES VISUALES ---
+# --- PANELES ---
 st.markdown(f"""
 <div class="panel-dinamico">
-    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{v_brecha:,.2f}%</div></div>
-    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{v_roi:,.2f}%</div></div>
+    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:,.2f}%</div></div>
+    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{roi:,.2f}%</div></div>
 </div>
 """, unsafe_allow_html=True)
 
-col_stats1, col_stats2, col_stats3 = st.columns(3)
-col_stats1.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
-col_stats2.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
-col_stats3.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
+col_s1, col_s2, col_s3 = st.columns(3)
+col_s1.metric("Hoy (Bs)", f"Bs.{gan_bs_h:,.0f}")
+col_s2.metric("Hoy (USDT)", f"{gan_usd_h:,.2f}")
+col_s3.metric("TOTAL", f"{gan_usd_t:,.2f}")
 
-# --- TICKET FINAL: COPIA FIEL DE TU IMAGEN (ORDEN Y ICONOS) ---
+# --- TICKET FINAL SIN ERRORES (RECONSTRUIDO) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
         <div class="ticket-header">👥 {titular_actual.upper()}</div>
-        
         <div class="ticket-retenido-box">
             <div class="ticket-retenido-label">🛡️ RETENIDO</div>
-            <div class="ticket-retenido-valor">{v_retenido:,.2f} USDT</div>
+            <div class="ticket-retenido-valor">{g_usdt:,.2f} USDT</div>
         </div>
-        
-        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{v_roi:,.2f}%</b></div>
-        <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><b class="ticket-value">{banco}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">Bs. {v_compra:,.2f}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">Bs. {v_venta:,.2f}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><b class="ticket-value">{metodo}</b></div>
-        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{v_brecha:,.2f}%</b></div>
+        <div class="ticket-row"><span>🚀 ROI NETO:</span><b>{roi:,.2f}%</b></div>
+        <div class="ticket-row"><span>🏦 Banco:</span><b>{banco}</b></div>
+        <div class="ticket-row"><span>📉 Compra Real:</span><b>Bs.{tr_b:,.2f}</b></div>
+        <div class="ticket-row"><span>📈 Venta P2P:</span><b>Bs.{tv:,.2f}</b></div>
+        <div class="ticket-row"><span>📍 Ruta:</span><b>{metodo}</b></div>
+        <div class="ticket-row" style="border:none;"><span>↔️ Brecha:</span><b>{brecha:,.2f}%</b></div>
+        <div class="ticket-footer">ROI comparativo con {ruta_alt}: {roi_alt:,.2f}%</div>
     </div>
 </div>
 """
 st.write(ticket_html, unsafe_allow_html=True)
 
-# --- REGISTRO Y HISTORIAL ---
-if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
-    nuevo = pd.DataFrame([{
-        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str,
-        "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A",
-        "Banco": banco, "Ruta": metodo, "USD_Comprados": usd_reales_b, 
-        "Ganancia_Bs": v_retenido * v_venta, "Usdt_Retenidos": round(v_retenido, 2), "ROI_%": round(v_roi, 2)
-    }])
+if st.button("💾 REGISTRAR OPERACIÓN", type="primary", use_container_width=True):
+    nuevo = pd.DataFrame([{"Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str, "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A", "Banco": banco, "Ruta": metodo, "USD_Comprados": u_b, "Ganancia_Bs": g_usdt * tv, "Usdt_Retenidos": round(g_usdt, 2), "ROI_%": round(roi, 2)}])
     updated_df = pd.concat([df_h, nuevo], ignore_index=True)
     conn.update(data=updated_df)
-    st.success("¡Operación Registrada!")
+    st.success("¡Registrado!")
     st.rerun()
 
 st.divider()
-with st.expander("📚 VER / EDITAR HISTORIAL"):
-    df_editado = st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True, key="history_editor")
-    if st.button("🛠️ Guardar Cambios en Historial", use_container_width=True):
-        conn.update(data=df_editado)
-        st.success("¡Historial actualizado!")
+with st.expander("📚 HISTORIAL"):
+    df_ed = st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True)
+    if st.button("🛠️ Sincronizar Cambios"):
+        conn.update(data=df_ed)
+        st.success("Sincronizado")
         st.rerun()
+        
