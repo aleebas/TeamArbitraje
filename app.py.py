@@ -17,45 +17,63 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL MÓVIL AVANZADO ---
+# --- ESTILO VISUAL MÓVIL AVANZADO V17.5 ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
+    
     /* Empujamos la app hacia abajo para que no choque con la barra superior del celular */
     .block-container { padding-top: 3.5rem !important; padding-bottom: 1rem !important; max-width: 98% !important; }
+    
     h1, h2, h3, p, label, .stMarkdown { color: #f8fafc !important; font-weight: 700 !important; margin-bottom: 2px !important;}
     h3 { font-size: 1.2rem !important; margin-top: 1rem !important; color: #38bdf8 !important; border-bottom: 1px solid #334155; padding-bottom: 5px; }
+    
     div[data-testid="stMetric"], div.stNumberInput, div.stRadio, div.stSelectbox {
         background-color: #1e293b !important; padding: 5px 10px !important; border-radius: 8px !important; border: 1px solid #334155 !important;
     }
+    
     div[data-testid="stNumberInputContainer"] { max-width: 100% !important; margin: 0 auto; }
     .stNumberInput div div input { color: #f8fafc !important; background-color: #0f172a !important; border: 1px solid #475569 !important; font-weight: 900 !important; text-align: center !important; font-size: 1.1rem !important;}
+    
     div[data-testid="stMetricValue"] { font-weight: 900 !important; color: #38bdf8 !important; font-size: 1.2rem !important;}
     div[data-testid="stMetricLabel"] p { font-size: 12px !important; color: #94a3b8 !important; }
+    
     section[data-testid="stSidebar"] { background-color: #1e293b !important; border-right: 1px solid #334155;}
+    
     .sugerencia-box { background-color: #064e3b; padding: 8px; border-radius: 8px; border: 1px solid #10b981; color: #a7f3d0; text-align: center; margin-bottom: 5px; font-size: 14px;}
     .usdt-box { background-color: #1e3a8a; padding: 10px; border-radius: 8px; border: 1px solid #3b82f6; color: #bfdbfe; text-align: center; margin-top: 5px; margin-bottom: 15px; font-weight: 900; font-size: 18px;}
     
-    /* Forzar lado a lado en móviles para los top controls */
+    /* Forzar lado a lado en móviles para los top controls (Entidad y Mecanismo) */
     @media (max-width: 768px) {
         .top-controls [data-testid="column"] { width: 50% !important; flex: 1 1 50% !important; min-width: 50% !important; }
     }
 
-    .ticket-wrapper { display: flex; justify-content: center; padding: 5px; margin-top: 10px;}
-    .whatsapp-ticket { background-color: #ffffff !important; border: 3px dashed #16a34a; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .whatsapp-ticket * { color: #000000 !important; } 
-    .ticket-header { text-align: center; font-size: 16px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #e2e8f0; }
-    .ticket-label { font-size: 13px; font-weight: 700; color: #334155 !important; }
-    .ticket-value { font-size: 14px; font-weight: 900; }
-    
-    .panel-dinamico { display: flex; justify-content: space-around; background: #020617; padding: 10px; border-radius: 10px; border: 1px solid #475569; margin: 15px 0;}
+    /* Panel Dinámico Brecha/ROI */
+    .panel-dinamico { display: flex; justify-content: space-around; background: #020617; padding: 10px; border-radius: 10px; border: 1px solid #475569; margin: 15px 0 5px 0;}
     .panel-item { text-align: center; }
     .panel-titulo { font-size: 12px; color: #94a3b8; }
     .panel-valor { font-size: 20px; font-weight: 900; color: #10b981; }
+
+    /* Nuevo Ticket WhatsApp Compacto V17.5 */
+    .ticket-wrapper { display: flex; justify-content: center; padding: 5px; margin-top: 5px; margin-bottom: 10px;}
+    .whatsapp-ticket { background-color: #ffffff !important; border: 3px dashed #16a34a; border-radius: 15px; padding: 15px; width: 100%; max-width: 380px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .whatsapp-ticket * { color: #000000 !important; } 
+    
+    /* Cabecera del ticket: Titular actual */
+    .ticket-header { text-align: center; font-size: 16px; font-weight: 900; color: #16a34a !important; border-bottom: 2px solid #16a34a; padding-bottom: 5px; margin-bottom: 10px; }
+    
+    .ticket-row { display: flex; justify-content: space-between; padding: 4px 0; border-bottom: 1px solid #e2e8f0; }
+    .ticket-label { font-size: 13px; font-weight: 700; color: #334155 !important; }
+    .ticket-value { font-size: 14px; font-weight: 900; }
+    
+    /* Fila de Retenido (Verde Grande) */
+    .ticket-retenido-box { background-color: #f0fdf4 !important; padding: 8px; border-radius: 8px; border: 2px solid #16a34a; margin-bottom: 10px; text-align: center; }
+    .ticket-retenido-label { font-size: 12px; font-weight: 700; color: #16a34a !important; }
+    .ticket-retenido-valor { font-size: 18px; font-weight: 900; color: #16a34a !important; }
     </style>
 """, unsafe_allow_html=True)
 
+# Encabezado (LOGO PRESERVADO)
 st.image("1774925854444.png", use_container_width=True)
 
 # Lógica de Estado
@@ -77,8 +95,7 @@ def update_tasa(): update_usd()
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 
-# --- SIDEBAR ---
-st.sidebar.header("📈 TUS ESTADÍSTICAS")
+# --- CÁLCULO DE ESTADÍSTICAS GLOBALES (Necesario para Sidebar y Zona Central) ---
 if not df_h.empty:
     df_hoy = df_h[df_h['Día'] == hoy_str]
     ganancia_bs_hoy = df_hoy['Ganancia_Bs'].sum()
@@ -87,13 +104,9 @@ if not df_h.empty:
 else:
     ganancia_bs_hoy, ganancia_usd_hoy, ganancia_usd_total = 0, 0, 0
 
-st.sidebar.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
-st.sidebar.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
-st.sidebar.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
-st.sidebar.divider()
-
-st.sidebar.header("👥 CUENTAS ACTIVAS")
-titular_actual = st.sidebar.selectbox("Titular:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
+# --- SIDEBAR (Móvil y Compacto V17.5) ---
+st.sidebar.header("👥 SELECCIÓN DE CUENTAS")
+titular_actual = st.sidebar.selectbox("Titular Actual:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
 zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
 
 st.sidebar.divider()
@@ -107,6 +120,7 @@ st.sidebar.metric(f"MES - {titular_actual}", f"$ {10000 - uso_mes_banco:,.2f}")
 st.sidebar.metric(f"MES - {zinli_actual}", f"$ {1000 - uso_mes_zinli:,.2f}")
 
 st.sidebar.divider()
+# Panel de estadísticas removed del sidebar por pedido del usuario V17.5
 c_asig_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
 c_asig_bancamiga = st.sidebar.number_input("% Asig. Bancamiga", value=0.80) / 100
 c_tarjeta = st.sidebar.number_input("% Uso Tarjeta", value=2.50) / 100
@@ -115,7 +129,7 @@ c_envio_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
 fijo_z = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
 c_bin_dep = st.sidebar.number_input("% Comis. Binance", value=3.30) / 100
 
-# --- CONTROLES SUPERIORES (LADO A LADO) ---
+# --- CONTROLES SUPERIORES (LADO A LADO FORZADO V17.5) ---
 st.markdown('<div class="top-controls">', unsafe_allow_html=True)
 col_head1, col_head2 = st.columns(2)
 with col_head1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
@@ -145,7 +159,7 @@ else:
     usd_directo = st.number_input("USD Gastados de Tarjeta", value=float(sugerido_t))
     usdt_recibidos = float(usd_directo * (1 - c_bin_dep))
 
-# VISUALIZADOR DE USDT A RECIBIR
+# VISUALIZADOR DE USDT A RECIBIR (PRESERVADO)
 st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {usdt_recibidos:.2f} USDT</div>', unsafe_allow_html=True)
 
 st.markdown("### 3️⃣ VENTA PARA RECUPERAR")
@@ -154,7 +168,7 @@ usdt_minimos_recuperar = cap_bs / tasa_v
 
 st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{usdt_minimos_recuperar:.2f} USDT</b> para reponer los Bs. {cap_bs:,.2f}</div>', unsafe_allow_html=True)
 
-# CONTROL MANUAL DE VENTA
+# CONTROL MANUAL DE VENTA (PRESERVADO)
 usdt_a_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(usdt_minimos_recuperar))
 
 # --- CÁLCULOS FINALES ---
@@ -163,7 +177,7 @@ bs_recuperados_reales = usdt_a_vender * tasa_v
 roi = ((usdt_ganancia_final * tasa_v) / cap_bs) * 100
 brecha = ((tasa_v / tasa_real_b) - 1) * 100
 
-# PANEL DINÁMICO
+# --- PANEL DINÁMICO (BRECHA Y ROI NETO V17.5) ---
 st.markdown(f"""
 <div class="panel-dinamico">
     <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:.2f}%</div></div>
@@ -171,23 +185,35 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# TICKET
+# --- PANEL ESTADÍSTICAS MOVIDO (JUSTO DEBAJO DE BRECHA/ROI V17.5) ---
+col_stats1, col_stats2, col_stats3 = st.columns(3)
+col_stats1.metric("Ganancia Hoy (Bs)", f"Bs. {ganancia_bs_hoy:,.2f}")
+col_stats2.metric("Retenido Hoy (USDT)", f"{ganancia_usd_hoy:,.2f} USDT")
+col_stats3.metric("🔥 ACUMULADO TOTAL", f"{ganancia_usd_total:,.2f} USDT")
+
+# --- NUEVO TICKET MODIFICADO (ORDEN Y CONTENIDO SEGÚN IMAGEN V17.5) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
-        <div class="ticket-header">📋 REPORTE ({titular_actual})</div>
+        <div class="ticket-header">👥 {titular_actual}</div>
+        
+        <div class="ticket-retenido-box">
+            <div class="ticket-retenido-label">🛡️ RETENIDO</div>
+            <div class="ticket-retenido-valor">{usdt_ganancia_final:.2f} USDT</div>
+        </div>
+        
+        <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><b class="ticket-value">{roi:.2f}%</b></div>
         <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><b class="ticket-value">{banco}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><b class="ticket-value">{metodo}</b></div>
         <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><b class="ticket-value">Bs. {tasa_real_b:,.2f}</b></div>
-        <div class="ticket-row"><span class="ticket-label">📈 Venta P2P:</span><b class="ticket-value">Bs. {tasa_v:,.2f}</b></div>
-        <div class="ticket-row"><span class="ticket-label">💵 Reposición:</span><b class="ticket-value">Bs. {bs_recuperados_reales:,.2f}</b></div>
-        <div class="ticket-row" style="border:none; margin-top:5px;"><span class="ticket-label">🛡️ RETENIDO:</span><b class="ticket-value" style="color:#16a34a !important; font-size:16px;">{usdt_ganancia_final:.2f} USDT</b></div>
+        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><b class="ticket-value">Bs. {tasa_v:,.2f}</b></div>
+        <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><b class="ticket-value">{metodo}</b></div>
+        <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><b class="ticket-value">{brecha:.2f}%</b></div>
     </div>
 </div>
 """
 st.write(ticket_html, unsafe_allow_html=True)
 
-# --- GUARDAR EN GOOGLE SHEETS ---
+# --- GUARDAR EN GOOGLE SHEETS (PRESERVADO) ---
 if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
     nuevo = pd.DataFrame([{
         "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str,
@@ -200,7 +226,7 @@ if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=Tr
     st.success("¡Operación Registrada!")
     st.rerun()
 
-# --- HISTORIAL EN LA NUBE ---
+# --- HISTORIAL EN LA NUBE (PRESERVADO) ---
 st.divider()
 with st.expander("📚 VER / EDITAR HISTORIAL"):
     df_editado = st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True, key="history_editor")
