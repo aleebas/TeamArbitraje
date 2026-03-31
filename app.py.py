@@ -6,11 +6,11 @@ from datetime import datetime
 # --- CONFIGURACIÓN DE PÁGINA Y ESTADO DE SESIÓN ---
 st.set_page_config(page_title="TEAM ARBITRAJE Pro", layout="wide", initial_sidebar_state="expanded")
 
-# --- IDENTIDAD VISUAL: LOGO (REEMPLAZA TÍTULO TEXTO) ---
+# --- IDENTIDAD VISUAL: LOGO (USANDO TU NOMBRE DE ARCHIVO REAL) ---
 # Mostramos la imagen del encabezado adaptada al ancho del móvil
-st.image("logo.png", use_container_width=True)
+st.image("1774925854444.png", use_container_width=True)
 
-# Inicializar variables de estado para el cálculo bidireccional (Blindado V16.5)
+# Inicializar variables de estado para el cálculo bidireccional (Blindado)
 if 'tasa_c' not in st.session_state: st.session_state.tasa_c = 570.0
 if 'cap_bs' not in st.session_state: st.session_state.cap_bs = 400000.0
 if 'usd_banco' not in st.session_state: st.session_state.usd_banco = 0.0
@@ -40,7 +40,7 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL: MODO OSCURO COMPACTO (CONSERVADO) ---
+# --- ESTILO VISUAL: MODO OSCURO COMPACTO ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -71,7 +71,7 @@ st.markdown("""
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 
-# --- SIDEBAR: GESTIÓN DE CUENTAS (CONSERVADO) ---
+# --- SIDEBAR: GESTIÓN DE CUENTAS ---
 st.sidebar.header("👥 CUENTAS ACTIVAS")
 titular_actual = st.sidebar.selectbox("Titular:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
 zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
@@ -79,7 +79,7 @@ zinli_actual = st.sidebar.selectbox("Cuenta Zinli:", [f"Zinli {i:02d}" for i in 
 st.sidebar.divider()
 st.sidebar.header("🛡️ LÍMITES EN VIVO")
 
-# Filtrar uso por Titular y por Zinli (No modificado, maneja reinicio automático 1 de Abril)
+# Filtrar uso por Titular y por Zinli
 uso_dia_banco = df_h[(df_h['Día'] == hoy_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum()
 uso_mes_banco = df_h[(df_h['Mes'] == mes_str) & (df_h['Titular'] == titular_actual)]['USD_Comprados'].sum()
 uso_mes_zinli = df_h[(df_h['Mes'] == mes_str) & (df_h['Cuenta_Zinli'] == zinli_actual) & (df_h['Ruta'] == 'ZINLI')]['USD_Comprados'].sum()
@@ -98,7 +98,7 @@ c_envio_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
 fijo_z = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
 c_bin_dep = st.sidebar.number_input("% Comis. Binance", value=3.30) / 100
 
-# --- LÓGICA DE OPERACIÓN (MISMA V16.5) ---
+# --- LÓGICA DE OPERACIÓN ---
 col_head1, col_head2 = st.columns(2)
 with col_head1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
 with col_head2: metodo = st.radio("📍 Mecanismo:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
@@ -137,7 +137,7 @@ with col_op2:
             usdt_recibidos = float(usd_directo * (1 - c_bin_dep))
             tasa_v = st.number_input("Tasa Venta", value=660.0)
 
-# --- CÁLCULOS Y TICKET (CONSERVADO) ---
+# --- CÁLCULOS Y TICKET ---
 usdt_para_recuperar = cap_bs / tasa_v
 usdt_ganancia = usdt_recibidos - usdt_para_recuperar
 roi = ((usdt_ganancia * tasa_v) / cap_bs) * 100
@@ -182,12 +182,10 @@ st.divider()
 st.subheader("📚 HISTORIAL EN LA NUBE (Editable)")
 st.info("💡 Haz doble clic en una celda para editar, o selecciona una fila a la izquierda y presiona 'Supr' en tu teclado para borrar.")
 
-# Usamos st.data_editor para permitir la edición y borrado directo
 df_editado = st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True, key="history_editor")
 
-# Botón para sincronizar los cambios (ediciones o borrados) con Google Sheets
 if st.button("🛠️ Guardar Cambios en Historial (Confirmar Borrado)", use_container_width=True):
-    # Sincronizamos todo el dataframe editado de vuelta a la nube
     conn.update(data=df_editado)
-    st.success("¡Historial actualizado en la nube correctamente!")
+    st.success("¡Historial actualizado correctamente!")
     st.rerun()
+    
