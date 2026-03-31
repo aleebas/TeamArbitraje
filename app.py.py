@@ -18,7 +18,7 @@ def load_data():
 
 df_h = load_data()
 
-# --- ESTILO VISUAL MÓVIL (Preservado V17.5) ---
+# --- ESTILO VISUAL MÓVIL AVANZADO (Preservado) ---
 st.markdown("""
     <style>
     .stApp { background-color: #0f172a !important; color: #f8fafc !important; }
@@ -80,7 +80,7 @@ def update_tasa(): update_usd()
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 
-# --- SIDEBAR ---
+# --- SIDEBAR (Preservado) ---
 if not df_h.empty:
     df_hoy = df_h[df_h['Día'] == hoy_str]
     gan_bs_h = df_hoy['Ganancia_Bs'].sum()
@@ -109,7 +109,7 @@ c_envio_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
 fijo_z = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
 c_bin_dep = st.sidebar.number_input("% Comis. Binance", value=3.30) / 100
 
-# --- CONTROLES ---
+# --- CONTROLES LADO A LADO ---
 st.markdown('<div class="top-controls">', unsafe_allow_html=True)
 col_h1, col_h2 = st.columns(2)
 with col_h1: banco = st.radio("🏦 Entidad:", ["BDV", "BANCAMIGA"], horizontal=True)
@@ -118,50 +118,48 @@ st.markdown('</div>', unsafe_allow_html=True)
 
 st.session_state.c_asig_val = c_asig_bancamiga if banco == "BANCAMIGA" else c_asig_bdv
 
-# --- PASO 1, 2 Y 3 ---
-st.markdown("### 1️⃣ COMPRA")
+# --- PASO 1: COMPRA ---
+st.markdown("### 1️⃣ COMPRA EN BANCO")
 tc = st.number_input("Tasa Compra", key="tasa_c", on_change=update_tasa)
 c_bs = st.number_input("Capital (Bs.)", key="cap_bs", on_change=update_usd)
 u_b = st.number_input(f"USD en {banco}", key="usd_banco", on_change=update_bs)
 tr_b = tc * (1 + st.session_state.c_asig_val)
 
-st.markdown("### 2️⃣ MOVIMIENTO")
-# Cálculo de la ruta actual
+# --- PASO 2: MOVIMIENTO (Restauración de Sugerencias) ---
+st.markdown("### 2️⃣ MOVIMIENTO Y CONVERSIÓN")
 if metodo == "ZINLI":
     m_sug = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">Sugerencia: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
-    u_neto_z = st.number_input("NETO Zinli", value=float(m_sug))
+    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Recarga {zinli_actual}: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
+    u_neto_z = st.number_input("NETO Zinli (Exacto)", value=float(m_sug))
     u_recibidos = float(((u_neto_z - fijo_z) / (1 + c_envio_z)) / 1.033)
-    # Cálculo Alternativo (Tarjeta Directa) para el pie de página
-    u_alt = float((u_b - 1.0) / (1 + c_tarjeta)) * (1 - c_bin_dep)
+    u_alt = float((u_b - 1.0) / (1 + c_tarjeta)) * (1 - c_bin_dep) # Para el ticket
 else:
     m_sug = (u_b - 1.0) / (1 + c_tarjeta)
-    st.markdown(f'<div class="sugerencia-box">Sugerencia: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
-    u_dir = st.number_input("USD Tarjeta", value=float(m_sug))
+    st.markdown(f'<div class="sugerencia-box">💡 Sugerencia Tarjeta: <b>$ {m_sug:,.2f}</b></div>', unsafe_allow_html=True)
+    u_dir = st.number_input("USD Gastados de Tarjeta", value=float(m_sug))
     u_recibidos = float(u_dir * (1 - c_bin_dep))
-    # Cálculo Alternativo (Zinli) para el pie de página
-    m_sug_z = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta)
+    m_sug_z = (u_b - 1.0) / (1 + c_zinli_com + c_tarjeta) # Para el ticket
     u_alt = float(((m_sug_z - fijo_z) / (1 + c_envio_z)) / 1.033)
 
 st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS: {u_recibidos:.2f} USDT</div>', unsafe_allow_html=True)
 
-st.markdown("### 3️⃣ VENTA")
-tv = st.number_input("Tasa Venta", value=660.0)
-u_vender = st.number_input("USDT a Vender", value=float(c_bs / tv if tv > 0 else 0.0))
+# --- PASO 3: VENTA (Restauración de Sugerencias) ---
+st.markdown("### 3️⃣ VENTA PARA RECUPERAR")
+tv = st.number_input("Tasa Venta (Bs/USDT)", value=660.0)
+u_min_rec = c_bs / tv if tv > 0 else 0.0
+st.markdown(f'<div class="sugerencia-box">⚠️ Debes vender mínimo <b>{u_min_rec:.2f} USDT</b> para reponer los Bs. {c_bs:,.2f}</div>', unsafe_allow_html=True)
+u_vender = st.number_input("¿Cuántos USDT vas a vender realmente?", value=float(u_min_rec))
 
-# --- CÁLCULOS CRÍTICOS (LIMPIEZA TOTAL) ---
-def final_clean(v):
-    return v if math.isfinite(v) else 0.0
+# --- CÁLCULOS TICKET (Blindados V17.9) ---
+def clean(v): return v if math.isfinite(v) else 0.0
 
-g_usdt = final_clean(u_recibidos - u_vender)
-brecha = final_clean(((tv / tr_b) - 1) * 100 if tr_b > 0 else 0.0)
-roi = final_clean(((g_usdt * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
-
-# Cálculo de ROI Alternativo (letra pequeña)
-roi_alt = final_clean((((u_alt - u_vender) * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
+g_usdt = clean(u_recibidos - u_vender)
+brecha = clean(((tv / tr_b) - 1) * 100 if tr_b > 0 else 0.0)
+roi = clean(((g_usdt * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
+roi_alt = clean((((u_alt - u_vender) * tv) / c_bs) * 100 if c_bs > 0 else 0.0)
 ruta_alt = "Tarjeta Directa" if metodo == "ZINLI" else "Zinli"
 
-# --- PANELES ---
+# --- PANELES DINÁMICOS ---
 st.markdown(f"""
 <div class="panel-dinamico">
     <div class="panel-item"><div class="panel-titulo">↔️ BRECHA REAL</div><div class="panel-valor">{brecha:,.2f}%</div></div>
@@ -174,7 +172,7 @@ col_s1.metric("Hoy (Bs)", f"Bs.{gan_bs_h:,.0f}")
 col_s2.metric("Hoy (USDT)", f"{gan_usd_h:,.2f}")
 col_s3.metric("TOTAL", f"{gan_usd_t:,.2f}")
 
-# --- TICKET FINAL SIN ERRORES (RECONSTRUIDO) ---
+# --- TICKET PERFECTO (RESTAURADO V17.9) ---
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
@@ -186,7 +184,7 @@ ticket_html = f"""
         <div class="ticket-row"><span>🚀 ROI NETO:</span><b>{roi:,.2f}%</b></div>
         <div class="ticket-row"><span>🏦 Banco:</span><b>{banco}</b></div>
         <div class="ticket-row"><span>📉 Compra Real:</span><b>Bs.{tr_b:,.2f}</b></div>
-        <div class="ticket-row"><span>📈 Venta P2P:</span><b>Bs.{tv:,.2f}</b></div>
+        <div class="ticket-row"><span>📈 Tasa Venta:</span><b>Bs.{tv:,.2f}</b></div>
         <div class="ticket-row"><span>📍 Ruta:</span><b>{metodo}</b></div>
         <div class="ticket-row" style="border:none;"><span>↔️ Brecha:</span><b>{brecha:,.2f}%</b></div>
         <div class="ticket-footer">ROI comparativo con {ruta_alt}: {roi_alt:,.2f}%</div>
@@ -195,7 +193,8 @@ ticket_html = f"""
 """
 st.write(ticket_html, unsafe_allow_html=True)
 
-if st.button("💾 REGISTRAR OPERACIÓN", type="primary", use_container_width=True):
+# --- BOTÓN REGISTRO ---
+if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
     nuevo = pd.DataFrame([{"Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy_str, "Mes": mes_str, "Titular": titular_actual, "Cuenta_Zinli": zinli_actual if metodo == 'ZINLI' else "N/A", "Banco": banco, "Ruta": metodo, "USD_Comprados": u_b, "Ganancia_Bs": g_usdt * tv, "Usdt_Retenidos": round(g_usdt, 2), "ROI_%": round(roi, 2)}])
     updated_df = pd.concat([df_h, nuevo], ignore_index=True)
     conn.update(data=updated_df)
@@ -209,4 +208,4 @@ with st.expander("📚 HISTORIAL"):
         conn.update(data=df_ed)
         st.success("Sincronizado")
         st.rerun()
-        
+                                     
