@@ -1,193 +1,161 @@
 import streamlit as st
-from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 from datetime import datetime
-import math
+import os
 
-# --- 1. CONFIGURACIÓN E INFRAESTRUCTURA ---
-st.set_page_config(page_title="TEAM ARBITRAJE ELITE", layout="wide", initial_sidebar_state="expanded")
+# Configuración inicial de la página
+st.set_page_config(page_title="Team Arbitraje Directo", layout="wide")
 
-# PERSISTENCIA DE DATOS (Escudo anti-borrado de caché móvil)
-keys = ['tasa_c', 'cap_bs', 'usd_banco', 'tasa_u', 'tasa_v', 'u_vender', 'banco_sel', 'metodo_sel']
-for key in keys:
-    if key not in st.session_state:
-        if key == 'tasa_c': st.session_state[key] = 580.0
-        elif key == 'cap_bs': st.session_state[key] = 100000.0
-        elif key == 'tasa_u': st.session_state[key] = 1.033
-        elif key == 'tasa_v': st.session_state[key] = 680.0
-        elif key == 'banco_sel': st.session_state[key] = "BDV"
-        elif key == 'metodo_sel': st.session_state[key] = "ZINLI"
-        else: st.session_state[key] = 0.0
-
-conn = st.connection("gsheets", type=GSheetsConnection)
-
-def load_data():
-    try: return conn.read(ttl="1s")
-    except: return pd.DataFrame(columns=["Fecha", "Día", "Mes", "Titular", "Cuenta_Zinli", "Banco", "Ruta", "USD_Comprados", "Ganancia_Bs", "Usdt_Retenidos", "ROI_%"])
-
-df_h = load_data()
-
-# --- 2. LÓGICA BIDIRECCIONAL (Sincronización Total) ---
-def sync_to_usd():
-    comm = 0.008 if st.session_state.banco_sel == "BANCAMIGA" else 0.005
-    tr = st.session_state.tasa_c * (1 + comm)
-    if tr > 0: st.session_state.usd_banco = st.session_state.cap_bs / tr
-
-def sync_to_bs():
-    comm = 0.008 if st.session_state.banco_sel == "BANCAMIGA" else 0.005
-    tr = st.session_state.tasa_c * (1 + comm)
-    st.session_state.cap_bs = st.session_state.usd_banco * tr
-
-# --- 3. ESTILO VISUAL (Móvil y PC) ---
-st.markdown("""
-    <style>
-    .stApp { background-color: #0b0f1a !important; color: #e2e8f0 !important; }
-    .block-container { padding-top: 2rem !important; max-width: 1100px !important; margin: 0 auto !important; }
-    
-    h3 { font-size: 1.3rem !important; color: #38bdf8 !important; border-left: 5px solid #38bdf8; padding-left: 10px; margin-top: 20px !important; }
-    
-    div[data-testid="stMetric"], div.stNumberInput, div.stRadio, div.stSelectbox {
-        background-color: #161e2e !important; border-radius: 12px !important; border: 1px solid #1f2937 !important; padding: 10px !important;
-    }
-    
-    .stNumberInput div div input { font-size: 1.2rem !important; font-weight: 900 !important; color: #ffffff !important; text-align: center !important; }
-    
-    .sugerencia-box { background-color: #064e3b; padding: 10px; border-radius: 10px; border: 1px solid #10b981; color: #d1fae5; text-align: center; margin: 10px 0; font-size: 15px; }
-    .usdt-box { background-color: #1e3a8a; padding: 15px; border-radius: 12px; border: 1px solid #3b82f6; color: #dbeafe; text-align: center; margin: 15px 0; font-weight: 900; font-size: 20px; }
-    
-    .panel-dinamico { display: flex; justify-content: space-around; background: #111827; padding: 15px; border-radius: 15px; border: 1px solid #374151; margin: 20px 0; }
-    .panel-item { text-align: center; }
-    .panel-titulo { font-size: 12px; color: #94a3b8; text-transform: uppercase; }
-    .panel-valor { font-size: 22px; font-weight: 900; color: #10b981; }
-
-    /* TICKET ESTILO WHATSAPP */
-    .whatsapp-ticket { background-color: #ffffff !important; border-radius: 20px; padding: 20px; width: 100%; max-width: 400px; margin: 0 auto; box-shadow: 0 10px 25px rgba(0,0,0,0.5); border: 2px solid #e2e8f0; }
-    .whatsapp-ticket * { color: #1e293b !important; }
-    .ticket-header { text-align: center; font-weight: 900; font-size: 18px; color: #059669 !important; border-bottom: 2px solid #10b981; padding-bottom: 8px; margin-bottom: 15px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #f1f5f9; }
-    .ticket-label { font-weight: 700; font-size: 14px; }
-    .ticket-value { font-weight: 800; font-size: 14px; }
-    .ticket-profit-box { background-color: #ecfdf5 !important; border: 2px solid #10b981; border-radius: 12px; padding: 12px; text-align: center; margin-bottom: 15px; }
-    .profit-label { font-size: 12px; font-weight: 700; color: #065f46 !important; }
-    .profit-val { font-size: 20px; font-weight: 900; color: #059669 !important; }
-    </style>
-""", unsafe_allow_html=True)
-
-# Encabezado
-st.image("1774925854444.png", use_container_width=True)
-
-# --- 4. SIDEBAR (Límites y Comisiones) ---
-st.sidebar.header("👥 TITULAR Y CUENTA")
-titular = st.sidebar.selectbox("Operador:", ["Alejandro", "Rosa", "Rubén", "Luz", "Yngianni"])
-zinli_id = st.sidebar.selectbox("Zinli:", [f"Zinli {i:02d}" for i in range(1, 16)])
-
-st.sidebar.divider()
-st.sidebar.header("🛡️ LÍMITES EN VIVO")
-hoy = datetime.now().strftime("%Y-%m-%d")
-mes = datetime.now().strftime("%Y-%m")
-
-uso_d = df_h[(df_h['Día'] == hoy) & (df_h['Titular'] == titular)]['USD_Comprados'].sum() if not df_h.empty else 0
-uso_m = df_h[(df_h['Mes'] == mes) & (df_h['Titular'] == titular)]['USD_Comprados'].sum() if not df_h.empty else 0
-st.sidebar.metric(f"Día - {titular}", f"$ {2000 - uso_d:,.2f}")
-st.sidebar.metric(f"Mes - {titular}", f"$ {10000 - uso_m:,.2f}")
-
-st.sidebar.divider()
-c_bdv = st.sidebar.number_input("% Asig. BDV", value=0.50) / 100
-c_bam = st.sidebar.number_input("% Asig. Bancamiga", value=0.80) / 100
-c_tarj = st.sidebar.number_input("% Uso Tarjeta", value=2.50) / 100
-c_zin_c = st.sidebar.number_input("% Com. Zinli", value=3.75) / 100
-c_env_z = st.sidebar.number_input("% Envío Zinli", value=1.00) / 100
-f_zin = st.sidebar.number_input("Fijo Zinli ($)", value=0.40)
-c_bin = st.sidebar.number_input("% Com. Binance", value=3.30) / 100
-
-# --- 5. CUERPO DE OPERACIÓN ---
-col_h1, col_h2 = st.columns(2)
-with col_h1: st.session_state.banco_sel = st.radio("🏦 Banco:", ["BDV", "BANCAMIGA"], horizontal=True)
-with col_h2: st.session_state.metodo_sel = st.radio("📍 Ruta:", ["ZINLI", "TARJETA DIRECTA"], horizontal=True)
-
-st.divider()
-
-# PASO 1: COMPRA (BIDIRECCIONAL)
-st.markdown("### 1️⃣ PASO: COMPRA EN BANCO")
-col_b1, col_b2 = st.columns(2)
-with col_b1:
-    st.number_input("Tasa de Compra (BCV)", key="tasa_c", on_change=sync_to_usd)
-    st.number_input("Monto en Bolívares (Bs.)", key="cap_bs", on_change=sync_to_usd)
-with col_b2:
-    st.number_input(f"USD a comprar en {st.session_state.banco_sel}", key="usd_banco", on_change=sync_to_bs)
-    com_actual = c_bam if st.session_state.banco_sel == "BANCAMIGA" else c_bdv
-    tr_banco = st.session_state.tasa_c * (1 + com_actual)
-    st.info(f"Tasa Real con Comisión: Bs. {tr_banco:,.2f}")
-
-# PASO 2: MOVIMIENTO
-st.markdown("### 2️⃣ PASO: MOVIMIENTO Y P2P")
-if st.session_state.metodo_sel == "ZINLI":
-    sug_rec = (st.session_state.usd_banco - 1.0) / (1 + c_zin_c + c_tarj)
-    st.markdown(f'<div class="sugerencia-box">💡 RECARGA SUGERIDA EN {zinli_id}: <b>$ {sug_rec:,.2f}</b></div>', unsafe_allow_html=True)
-    u_neto = st.number_input("Neto en Zinli (Confirmado)", value=float(sug_rec))
-    t_p2p = st.number_input("Tasa P2P (USD/USDT)", key="tasa_u")
-    u_recibidos = ((u_neto - f_zin) / (1 + c_env_z)) / t_p2p if t_p2p > 0 else 0
-else:
-    sug_tar = (st.session_state.usd_banco - 1.0) / (1 + c_tarj)
-    st.markdown(f'<div class="sugerencia-box">💡 MONTO SUGERIDO TARJETA: <b>$ {sug_tar:,.2f}</b></div>', unsafe_allow_html=True)
-    u_dir = st.number_input("USD Gastados con Tarjeta", value=float(sug_tar))
-    u_recibidos = u_dir * (1 - c_bin)
-
-st.markdown(f'<div class="usdt-box">📥 RECIBIRÁS EN BINANCE: {u_recibidos:,.2f} USDT</div>', unsafe_allow_html=True)
-
-# PASO 3: VENTA
-st.markdown("### 3️⃣ PASO: VENTA Y CIERRE")
-t_venta = st.number_input("Tasa de Venta P2P (Bs.)", key="tasa_v")
-u_para_rep = st.session_state.cap_bs / t_venta if t_venta > 0 else 0
-st.markdown(f'<div class="sugerencia-box">⚠️ Vende mínimo <b>{u_para_rep:,.2f} USDT</b> para recuperar tu capital.</div>', unsafe_allow_html=True)
-u_vendidos = st.number_input("USDT Vendidos para reponer Bs.", value=float(u_para_rep))
-
-# --- 6. RESULTADOS Y TICKET ---
-g_usdt = u_recibidos - u_vendidos
-g_bs = g_usdt * t_venta
-roi = (g_bs / st.session_state.cap_bs) * 100 if st.session_state.cap_bs > 0 else 0
-brecha = ((t_venta / tr_banco) - 1) * 100 if tr_banco > 0 else 0
-
-# PANEL DINÁMICO
-st.markdown(f"""
-<div class="panel-dinamico">
-    <div class="panel-item"><div class="panel-titulo">↔️ BRECHA</div><div class="panel-valor">{brecha:,.2f}%</div></div>
-    <div class="panel-item"><div class="panel-titulo">🚀 ROI NETO</div><div class="panel-valor">{roi:,.2f}%</div></div>
-</div>
-""", unsafe_allow_html=True)
-
-# TICKET WHATSAPP
-ticket = f"""
-<div class="whatsapp-ticket">
-    <div class="ticket-header">👥 {titular.upper()} - {zinli_id}</div>
-    <div class="ticket-profit-box">
-        <div class="profit-label">💰 GANANCIA POR VUELTA</div>
-        <div class="profit-val">{g_usdt:,.2f} USDT / Bs. {g_bs:,.2f}</div>
-    </div>
-    <div class="ticket-row"><span class="ticket-label">🚀 ROI NETO:</span><span class="ticket-value">{roi:,.2f}%</span></div>
-    <div class="ticket-row"><span class="ticket-label">🏦 Banco:</span><span class="ticket-value">{st.session_state.banco_sel}</span></div>
-    <div class="ticket-row"><span class="ticket-label">📉 Compra Real:</span><span class="ticket-value">Bs. {tr_banco:,.2f}</span></div>
-    <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><span class="ticket-value">Bs. {t_venta:,.2f}</span></div>
-    <div class="ticket-row"><span class="ticket-label">📍 Ruta:</span><span class="ticket-value">{st.session_state.metodo_sel}</span></div>
-    <div class="ticket-row" style="border:none;"><span class="ticket-label">↔️ Brecha Real:</span><span class="ticket-value">{brecha:,.2f}%</span></div>
+# Diseño del Logo en SVG (Vectorial e integrado)
+logo_svg = """
+<div style="display: flex; justify-content: center; margin-bottom: 20px;">
+    <svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#1e293b"/>
+          <stop offset="100%" stop-color="#020617"/>
+        </radialGradient>
+        <path id="textPathTop" d="M 30,100 A 70,70 0 0,1 170,100" />
+        <path id="textPathBot" d="M 170,105 A 70,70 0 0,1 30,105" />
+      </defs>
+      
+      <circle cx="100" cy="100" r="95" fill="url(#bgGrad)" stroke="#38bdf8" stroke-width="2"/>
+      
+      <text fill="#e2e8f0" font-size="16" font-weight="900" font-family="sans-serif" letter-spacing="1">
+        <textPath href="#textPathTop" startOffset="50%" text-anchor="middle">TEAM ARBITRAJE</textPath>
+      </text>
+      <text fill="#22d3ee" font-size="14" font-weight="800" font-family="sans-serif" letter-spacing="2">
+        <textPath href="#textPathBot" startOffset="50%" text-anchor="middle">RUTA DIRECTA</textPath>
+      </text>
+      
+      <rect x="75" y="95" width="12" height="30" fill="#475569" rx="2"/>
+      <rect x="95" y="80" width="12" height="45" fill="#94a3b8" rx="2"/>
+      <rect x="115" y="60" width="12" height="65" fill="#38bdf8" rx="2"/>
+      
+      <path d="M 55,130 Q 100,130 135,75" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round"/>
+      <polygon points="142,65 125,75 140,85" fill="#22d3ee" transform="rotate(-15 135 75)"/>
+      
+      <rect x="45" y="120" width="20" height="20" fill="#cbd5e1" rx="4"/>
+      <path d="M 50,135 L 60,135" stroke="#475569" stroke-width="2"/>
+      
+      <polygon points="150,45 162,52 162,65 150,72 138,65 138,52" fill="#020617" stroke="#22d3ee" stroke-width="2" filter="drop-shadow(0 0 4px #22d3ee)"/>
+      <text x="150" y="62" fill="#22d3ee" font-size="10" font-weight="bold" font-family="sans-serif" text-anchor="middle">₮</text>
+    </svg>
 </div>
 """
-st.write(ticket, unsafe_allow_html=True)
 
-# REGISTRO
-if st.button("💾 REGISTRAR EN LA NUBE", type="primary", use_container_width=True):
-    nuevo = pd.DataFrame([{
-        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), "Día": hoy, "Mes": mes,
-        "Titular": titular, "Cuenta_Zinli": zinli_id if st.session_state.metodo_sel == 'ZINLI' else "N/A",
-        "Banco": st.session_state.banco_sel, "Ruta": st.session_state.metodo_sel, "USD_Comprados": st.session_state.usd_banco, 
-        "Ganancia_Bs": g_bs, "Usdt_Retenidos": round(g_usdt, 2), "ROI_%": round(roi, 2)
-    }])
-    updated = pd.concat([df_h, nuevo], ignore_index=True)
-    conn.update(data=updated)
-    st.success("¡Operación Registrada!")
-    st.rerun()
+# Estilo Restful Blue y Ticket WhatsApp Mobile-First
+st.markdown("""
+    <style>
+    .main { background-color: #10172a; color: #e2e8f0; }
+    div[data-testid="stMetric"] { background-color: #1e293b !important; padding: 10px; border-radius: 12px; border: 1px solid #334155 !important; }
+    div[data-testid="stMetricValue"] { font-weight: 900 !important; color: #38bdf8 !important; }
+    div[data-testid="stMetricLabel"] p { font-weight: 800 !important; color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; }
+    h1, h2, h3, p, label, .stMarkdown { color: #e2e8f0 !important; font-weight: 700 !important; }
+    .stNumberInput div div input { color: #e2e8f0 !important; background-color: #1f2937 !important; border: 1px solid #334155 !important; font-weight: 800 !important; }
+    .sugerencia-box { background-color: #fef08a; padding: 15px; border-radius: 10px; border: 2px solid #000000; color: #000000; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+    .ticket-wrapper { display: flex; justify-content: center; padding: 10px; }
+    
+    /* Optimización Mobile para el Ticket */
+    .whatsapp-ticket { background-color: #ffffff; border: 4px dashed #16a34a; border-radius: 20px; padding: 20px; width: 100%; max-width: 450px; color: #000000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); }
+    
+    .ticket-header { text-align: center; font-size: 18px; font-weight: 900; color: #16a34a; border-bottom: 3px solid #16a34a; padding-bottom: 10px; margin-bottom: 15px; }
+    .ticket-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #000000; align-items: center; }
+    .ticket-label { font-size: 15px; font-weight: 700; color: #334155; }
+    .ticket-value { font-size: 15px; font-weight: 900; color: #000000; text-align: right; }
+    .ticket-roi-box { text-align: center; font-size: 22px; font-weight: 900; color: #16a34a; background-color: #f0fdf4; padding: 12px; border-radius: 12px; margin-top: 15px; border: 2px solid #16a34a; }
+    </style>
+    """, unsafe_allow_html=True)
 
-# HISTORIAL
-st.divider()
-with st.expander("📚 VER HISTORIAL COMPLETO"):
-    st.data_editor(df_h.sort_index(ascending=False), num_rows="dynamic", use_container_width=True)
+# Inyectar el Logo
+st.markdown(logo_svg, unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>🚀 TEAM ARBITRAJE DIRECTO</h1>", unsafe_allow_html=True)
+
+# Lógica de Cupo Diario ($2k)
+hoy_str = datetime.now().strftime("%Y-%m-%d")
+archivo_historial = "historial_directo.csv"
+
+if os.path.exists(archivo_historial):
+    df_h = pd.read_csv(archivo_historial)
+    cupo_dia_usado = df_h[df_h['Día'] == hoy_str]['USD_Comprados'].sum()
+else: 
+    cupo_dia_usado = 0.0
+
+st.sidebar.header("🛡️ CONTROL DE CUPO")
+st.sidebar.metric("Cupo Diario Libre", f"$ {2000 - cupo_dia_usado:,.2f}")
+st.sidebar.progress(min(cupo_dia_usado / 2000, 1.0))
+
+# Ajustes de Lógica de Negocio Fija
+c_tarjeta = 0.025 # Comisión Tarjeta 2.5%
+c_binance = 0.033 # Comisión Binance 3.3%
+
+banco = st.selectbox("Banco Origen:", ["BDV", "BANCAMIGA"])
+c_asig = 0.005 if banco == "BDV" else 0.008 # Comisiones de asignación
+
+col1, col2 = st.columns(2)
+with col1:
+    cap_bs = st.number_input("Capital Invertido (Bs.)", value=400000.0)
+with col2:
+    tasa_c = st.number_input("Tasa Compra (Base)", value=570.0)
+
+tasa_real_b = tasa_c * (1 + c_asig)
+usd_en_banco = st.number_input(f"Total USD en {banco}", value=float(cap_bs / tasa_real_b))
+
+# Sugerencia de Monto (Dejar $1)
+monto_rec_sug = (usd_en_banco - 1.0) / (1 + c_tarjeta)
+st.markdown(f'<div class="sugerencia-box"><b>MONTO TARJETA (Dejar $1):</b><br><span style="font-size:24px; font-weight:900;">$ {monto_rec_sug:,.2f}</span></div>', unsafe_allow_html=True)
+
+# Resultados Reales
+col3, col4 = st.columns(2)
+with col3:
+    usd_recargados = st.number_input("USD Netos tras Tarjeta", value=float(monto_rec_sug))
+    minutos = st.number_input("Tiempo (Min)", value=40)
+with col4:
+    tasa_v = st.number_input("Tasa de Venta P2P", value=660.0)
+    usdt_finales = usd_recargados * (1 - c_binance)
+
+# Análisis Financiero
+gan_bs = (usdt_finales * tasa_v) - cap_bs
+roi = (gan_bs / cap_bs) * 100
+brecha = ((tasa_v / tasa_real_b) - 1) * 100
+
+st.markdown("### 📊 Métricas de Operación")
+res1, res2, res3, res4 = st.columns(4)
+res1.metric("GANANCIA", f"Bs. {gan_bs:,.2f}")
+res2.metric("ROI REAL", f"{roi:.2f}%")
+res3.metric("BRECHA", f"{brecha:.2f}%")
+res4.metric("USDT RECIBIDOS", f"{usdt_finales:,.2f}")
+
+# Ticket Estilo WhatsApp
+ticket_html = f"""
+<div class="ticket-wrapper">
+    <div class="whatsapp-ticket">
+        <div class="ticket-header">📋 REPORTE DIRECTO - {banco}</div>
+        <div class="ticket-row"><span class="ticket-label">📉 Compra:</span><span class="ticket-value">Bs. {tasa_real_b:,.2f}</span></div>
+        <div class="ticket-row"><span class="ticket-label">📈 Venta:</span><span class="ticket-value">Bs. {tasa_v:,.2f}</span></div>
+        <div class="ticket-row"><span class="ticket-label">↔️ Brecha:</span><span class="ticket-value">{brecha:.2f}%</span></div>
+        <div class="ticket-row" style="border:none;"><span class="ticket-label">💰 Ganancia:</span><span class="ticket-value" style="color:#16a34a;">Bs. {gan_bs:,.2f}</span></div>
+        <div class="ticket-roi-box">🚀 ROI REAL: {roi:.2f}%</div>
+    </div>
+</div>
+"""
+st.write(ticket_html, unsafe_allow_html=True)
+
+# Guardar en Historial
+st.markdown("<br>", unsafe_allow_html=True)
+if st.button("💾 GUARDAR OPERACIÓN", use_container_width=True):
+    nuevo_registro = {
+        "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), 
+        "Día": hoy_str, 
+        "USD_Comprados": usd_en_banco, 
+        "Ganancia_Bs": gan_bs, 
+        "ROI": roi
+    }
+    pd.DataFrame([nuevo_registro]).to_csv(
+        archivo_historial, 
+        mode='a', 
+        header=not os.path.exists(archivo_historial), 
+        index=False
+    )
+    st.success("¡Operación guardada en el historial exitosamente!")
+    st.balloons()
