@@ -29,39 +29,12 @@ st.markdown("""
     </style>
     """, unsafe_allow_html=True)
 
-# Logo SVG Blindado con Base64 (Nunca se romperá en móvil)
-logo_svg = """<svg viewBox="0 0 200 200" width="180" height="180" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <radialGradient id="bgGrad" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1e293b"/>
-      <stop offset="100%" stop-color="#020617"/>
-    </radialGradient>
-    <path id="textPathTop" d="M 30,100 A 70,70 0 0,1 170,100" />
-    <path id="textPathBot" d="M 170,105 A 70,70 0 0,1 30,105" />
-  </defs>
-  <circle cx="100" cy="100" r="95" fill="url(#bgGrad)" stroke="#38bdf8" stroke-width="2"/>
-  <text fill="#e2e8f0" font-size="16" font-weight="900" font-family="sans-serif" letter-spacing="1">
-    <textPath href="#textPathTop" startOffset="50%" text-anchor="middle">TEAM ARBITRAJE</textPath>
-  </text>
-  <text fill="#22d3ee" font-size="14" font-weight="800" font-family="sans-serif" letter-spacing="2">
-    <textPath href="#textPathBot" startOffset="50%" text-anchor="middle">RUTA DIRECTA</textPath>
-  </text>
-  <rect x="75" y="95" width="12" height="30" fill="#475569" rx="2"/>
-  <rect x="95" y="80" width="12" height="45" fill="#94a3b8" rx="2"/>
-  <rect x="115" y="60" width="12" height="65" fill="#38bdf8" rx="2"/>
-  <path d="M 55,130 Q 100,130 135,75" fill="none" stroke="#22d3ee" stroke-width="4" stroke-linecap="round"/>
-  <polygon points="142,65 125,75 140,85" fill="#22d3ee" transform="rotate(-15 135 75)"/>
-  <rect x="45" y="120" width="20" height="20" fill="#cbd5e1" rx="4"/>
-  <path d="M 50,135 L 60,135" stroke="#475569" stroke-width="2"/>
-  <polygon points="150,45 162,52 162,65 150,72 138,65 138,52" fill="#020617" stroke="#22d3ee" stroke-width="2"/>
-  <text x="150" y="62" fill="#22d3ee" font-size="10" font-weight="bold" font-family="sans-serif" text-anchor="middle">₮</text>
-</svg>"""
+# ELIMINADO: Bloque del Logo (SVG y Base64). 
 
-b64_logo = base64.b64encode(logo_svg.encode('utf-8')).decode('utf-8')
-st.markdown(f'<div style="text-align: center; margin-bottom: 10px;"><img src="data:image/svg+xml;base64,{b64_logo}"></div>', unsafe_allow_html=True)
-st.markdown("<h2 style='text-align: center;'>🚀 RUTA DIRECTA</h2><hr>", unsafe_allow_html=True)
+# Comienzo limpio directamente con el título y separador
+st.markdown("<h2 style='text-align: center;'>🚀 RUTA DIRECTA</h2><hr style='margin-bottom: 15px;'>", unsafe_allow_html=True)
 
-# Lógica de Cupo y Récords Diario
+# Lógica de Cupo y Récords Diario (PRESERVADA AL 100%)
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 archivo_historial = "historial_directo.csv"
 
@@ -83,7 +56,7 @@ else:
     ganancia_acumulada = 0.0
     vueltas_hoy = 0
 
-# SIDEBAR: Control de Cupo y Récord
+# SIDEBAR: Control de Cupo y Récord (PRESERVADO AL 100%)
 st.sidebar.header("🛡️ CONTROL DE CUPO")
 st.sidebar.metric("Cupo Diario Libre", f"$ {2000 - cupo_dia_usado:,.2f}")
 st.sidebar.progress(min(cupo_dia_usado / 2000, 1.0))
@@ -94,11 +67,11 @@ st.sidebar.metric("🔄 Vueltas Completadas", vueltas_hoy)
 st.sidebar.metric("💰 Ganancia Acumulada", f"Bs. {ganancia_acumulada:,.2f}")
 st.sidebar.metric("🔥 Mejor Vuelta", f"Bs. {mejor_vuelta:,.2f}")
 
-# Comisiones Fijas
+# Comisiones Fijas (PRESERVADAS AL 100%)
 c_tarjeta = 0.025 # 2.5%
 c_binance = 0.033 # 3.3%
 
-# INPUTS: Datos de Entrada
+# INPUTS: Datos de Entrada (PRESERVADO AL 100%)
 col1, col2 = st.columns(2)
 with col1:
     banco = st.selectbox("🏦 Banco Origen:", ["BDV", "BANCAMIGA"])
@@ -111,7 +84,7 @@ c_asig = 0.005 if banco == "BDV" else 0.008
 tasa_real_b = tasa_c * (1 + c_asig)
 usd_en_banco = cap_bs / tasa_real_b
 
-# LÓGICA DE NEGOCIO EN CASCADA (Calculo Exacto)
+# LÓGICA DE NEGOCIO EN CASCADA (Calculo Exacto - PRESERVADO AL 100%)
 st.markdown("### 🧮 Simulación en Cascada")
 dejar_dolar = st.checkbox("Dejar $1 en la cuenta por seguridad", value=True)
 
@@ -134,11 +107,26 @@ st.info(f"""
 
 st.markdown("### 📊 Rendimiento de esta Vuelta")
 res1, res2, res3 = st.columns(3)
-res1.metric("GANANCIA NETA", f"Bs. {gan_bs:,.2f}")
+
+# --- MODIFICACIÓN DE MÉTRICA DE GANANCIA (image_2.png) ---
+# Reemplazo st.metric por HTML customizado para el diseño híbrido Bs + USDT Verde
+gan_usdt = gan_bs / tasa_v if tasa_v != 0 else 0
+# res1.metric("GANANCIA NETA", f"Bs. {gan_bs:,.2f}") # Reemplazado
+
+with res1:
+    st.markdown(f"""
+    <div data-testid="stMetric" style="background-color: #1e293b !important; padding: 10px; border-radius: 12px; border: 1px solid #334155 !important;">
+        <p style="font-weight: 800 !important; color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; margin: 0;">GANANCIA NETA</p>
+        <p style="font-weight: 900 !important; color: #38bdf8 !important; font-size: 32px !important; margin: 0;">Bs. {gan_bs:,.2f}</p>
+        <p style="color: #16a34a !important; font-weight: 700 !important; font-size: 14px !important; margin-top: -5px; margin-bottom: 0;">≈ ₮ {gan_usdt:,.2f} Netos</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Resto de métricas estándar (PRESERVADO AL 100%)
 res2.metric("ROI REAL", f"{roi:.2f}%")
 res3.metric("BRECHA", f"{brecha:.2f}%")
 
-# Ticket Estilo WhatsApp
+# Ticket Estilo WhatsApp (PRESERVADO AL 100%)
 ticket_html = f"""
 <div class="ticket-wrapper">
     <div class="whatsapp-ticket">
@@ -154,7 +142,7 @@ ticket_html = f"""
 """
 st.write(ticket_html, unsafe_allow_html=True)
 
-# Guardar en Historial
+# Guardar en Historial (PRESERVADO AL 100%)
 st.markdown("<br>", unsafe_allow_html=True)
 if st.button("💾 GUARDAR VUELTA", use_container_width=True):
     nuevo_registro = {
@@ -172,3 +160,4 @@ if st.button("💾 GUARDAR VUELTA", use_container_width=True):
     )
     st.success("¡Vuelta registrada con éxito! Actualiza la página para ver tu nuevo Récord.")
     st.balloons()
+    
