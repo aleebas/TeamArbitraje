@@ -123,15 +123,17 @@ gan_bs = (usdt_finales * tasa_v) - cap_bs
 roi = (gan_bs / cap_bs) * 100 if cap_bs > 0 else 0
 brecha = ((tasa_v / tasa_real_b) - 1) * 100 if tasa_real_b > 0 else 0
 
-# ALERTA DINÁMICA DE PUNTO DE EQUILIBRIO
+# ALERTA DINÁMICA DE PUNTO DE EQUILIBRIO (RESTAURADA COMPLETA)
 tasa_minima_venta = cap_bs / usdt_finales if usdt_finales > 0 else 0
 
 if tasa_v <= tasa_minima_venta:
-    st.error(f"🚨 **¡ALERTA DE PÉRDIDA!** Estás trabajando para pagar comisiones. Para recuperar tu inversión debes vender a **MÁS de Bs. {tasa_minima_venta:,.2f}**.")
+    st.error(f"🚨 **¡ALERTA DE PÉRDIDA!** Estás trabajando para pagar comisiones. Para recuperar tu inversión (Punto de Equilibrio) debes vender a **MÁS de Bs. {tasa_minima_venta:,.2f}**.")
 elif tasa_v < (tasa_minima_venta * 1.015): 
     st.warning(f"⚠️ **¡CUIDADO!** Tu margen de ganancia es muy ajustado. Recuerda que tu tasa mínima sin pérdidas es **Bs. {tasa_minima_venta:,.2f}**.")
+else:
+    st.info(f"💡 **Información:** Tu punto de equilibrio en esta operación es vendiendo a **Bs. {tasa_minima_venta:,.2f}**.")
 
-# RADAR DE INTERÉS COMPUESTO (NUEVA FUNCIONALIDAD)
+# RADAR DE INTERÉS COMPUESTO
 if usd_en_banco > 0 and roi > 0:
     capital_simulado = usd_en_banco
     cupo_disponible_sim = cupo_diario_restante
@@ -225,3 +227,4 @@ if st.button("💾 GUARDAR VUELTA", use_container_width=True):
         )
         st.success(f"¡Vuelta registrada en {cuenta_activa} con éxito! Actualiza para ver el Récord.")
         st.balloons()
+        
