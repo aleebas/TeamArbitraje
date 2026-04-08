@@ -25,7 +25,7 @@ st.markdown("""
     
     /* Elementos UI Específicos */
     .dashboard-panel { background-color: #0f172a; padding: 20px; border-radius: 15px; border: 1px solid #38bdf8; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.1); }
-    .step-box { background-color: #1e293b; padding: 20px; border-radius: 15px; border-left: 5px solid #16a34a; margin-bottom: 20px; }
+    .step-box { background-color: #1e293b; padding: 15px 20px; border-radius: 12px; border-left: 5px solid #16a34a; margin-bottom: 15px; margin-top: 15px;}
     .highlight-action { background-color: #fef08a; padding: 10px; border-radius: 8px; color: #000; text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 10px; border: 2px dashed #ca8a04; }
     
     /* Ticket y Radar */
@@ -50,14 +50,13 @@ hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
 archivo_historial = "historial_directo.csv"
 
-# Columnas extendidas para guardar más detalles
 columnas_historial = ['Fecha', 'Día', 'Mes', 'Cuenta', 'Cap_Invertido_Bs', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Bs_Recibidos', 'Ganancia_Bs', 'ROI']
 
 if os.path.exists(archivo_historial):
     df_h = pd.read_csv(archivo_historial)
     for col in columnas_historial:
         if col not in df_h.columns:
-            df_h[col] = 0.0 # Rellenar columnas faltantes en historiales viejos
+            df_h[col] = 0.0
 else:
     df_h = pd.DataFrame(columns=columnas_historial)
 
@@ -89,14 +88,16 @@ with col_d2:
 with col_d3:
     ganancia_acumulada = df_cuenta_hoy['Ganancia_Bs'].sum() if not df_cuenta_hoy.empty else 0.0
     mejor_vuelta = df_cuenta_hoy['Ganancia_Bs'].max() if not df_cuenta_hoy.empty else 0.0
+    ganancia_total_hoy = df_h[df_h['Día'] == hoy_str]['Ganancia_Bs'].sum() if not df_h.empty else 0.0
     
-    st.markdown(f"**💰 Ganancia del Día:** <span style='color:#16a34a; font-size:20px;'>Bs. {ganancia_acumulada:,.2f}</span>", unsafe_allow_html=True)
-    st.markdown(f"**🔥 Mejor Vuelta:** <span style='color:#38bdf8; font-size:18px;'>Bs. {mejor_vuelta:,.2f}</span>", unsafe_allow_html=True)
+    st.markdown(f"**💰 Ganancia ({cuenta_activa}):** <span style='color:#16a34a; font-size:18px;'>Bs. {ganancia_acumulada:,.2f}</span>", unsafe_allow_html=True)
+    st.markdown(f"**🔥 Mejor Vuelta:** <span style='color:#38bdf8; font-size:16px;'>Bs. {mejor_vuelta:,.2f}</span>", unsafe_allow_html=True)
+    st.markdown(f"**🌍 Ganancia GLOBAL (Hoy):** <span style='color:#facc15; font-size:20px;'>Bs. {ganancia_total_hoy:,.2f}</span>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# FLUJO OPERATIVO: PASO A PASO (CONFIRMACIÓN MANUAL)
+# FLUJO OPERATIVO: PASO A PASO
 # ---------------------------------------------------------
 
 # Comisiones Fijas (BDV Fijo 0.5%)
@@ -115,8 +116,7 @@ tasa_real_b = tasa_c * (1 + c_asig)
 st.markdown("---")
 
 # PASO 1: FONDEO
-st.markdown("<div class='step-box'>", unsafe_allow_html=True)
-st.markdown("### 1️⃣ Fondeo de Capital (BDV)")
+st.markdown("<div class='step-box'><h3 style='margin:0;'>1️⃣ Fondeo de Capital (BDV)</h3></div>", unsafe_allow_html=True)
 tipo_ingreso = st.radio("Ingresar monto en:", ["Bolívares (Bs)", "Dólares (USD)"], horizontal=True, label_visibility="collapsed")
 
 if tipo_ingreso == "Bolívares (Bs)":
@@ -127,12 +127,10 @@ else:
     usd_en_banco = st.number_input("Monto a Comprar (USD)", value=100.00, format="%.2f", step=10.0)
     cap_bs = usd_en_banco * tasa_real_b
     st.info(f"🇻🇪 Necesitas fondear: **Bs. {cap_bs:,.2f}** (Aprox)")
-st.markdown("</div>", unsafe_allow_html=True)
 
 
 # PASO 2: RECARGA BINANCE (TARJETA)
-st.markdown("<div class='step-box'>", unsafe_allow_html=True)
-st.markdown("### 2️⃣ Recarga por Tarjeta")
+st.markdown("<div class='step-box'><h3 style='margin:0;'>2️⃣ Recarga por Tarjeta</h3></div>", unsafe_allow_html=True)
 dejar_dolar = st.checkbox("Dejar $1 de holgura por seguridad", value=True)
 usd_base = max(0.0, (usd_en_banco - 1.0) if dejar_dolar else usd_en_banco)
 
@@ -143,22 +141,18 @@ st.markdown(f"<div class='highlight-action'>⚠️ MONTO EXACTO A TECLEAR EN LA 
 
 # CONFIRMACIÓN MANUAL
 confirmado_tarjeta = st.number_input("👉 Confirma el monto que escribiste (Sin redondear céntimos si no quieres):", value=float(f"{sugerido_tarjeta:.2f}"), step=1.0)
-st.markdown("</div>", unsafe_allow_html=True)
 
 
 # PASO 3: LLEGADA A BINANCE (USDT)
-st.markdown("<div class='step-box'>", unsafe_allow_html=True)
-st.markdown("### 3️⃣ USDT Recibidos en Binance")
+st.markdown("<div class='step-box'><h3 style='margin:0;'>3️⃣ USDT Recibidos en Binance</h3></div>", unsafe_allow_html=True)
 sugerido_binance = confirmado_tarjeta * (1 - c_binance)
 
 st.markdown(f"Deberían llegarte aproximadamente: **₮ {sugerido_binance:,.2f}**")
 confirmado_usdt_recibido = st.number_input("👉 Confirma cuántos USDT reales te acreditaron:", value=float(f"{sugerido_binance:.2f}"), step=1.0)
-st.markdown("</div>", unsafe_allow_html=True)
 
 
 # PASO 4: VENTA P2P
-st.markdown("<div class='step-box'>", unsafe_allow_html=True)
-st.markdown("### 4️⃣ Venta en el P2P")
+st.markdown("<div class='step-box'><h3 style='margin:0;'>4️⃣ Venta en el P2P</h3></div>", unsafe_allow_html=True)
 
 col_v1, col_v2 = st.columns(2)
 with col_v1:
@@ -166,10 +160,9 @@ with col_v1:
 with col_v2:
     sugerido_bs_recibir = usdt_a_vender * tasa_v
     confirmado_bs_recibidos = st.number_input("👉 Confirma Bs. Totales Recibidos en Cuenta:", value=float(f"{sugerido_bs_recibir:.2f}"), step=100.0)
-st.markdown("</div>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# RESULTADOS EXACTOS Y ALERTAS (Basado en confirmaciones)
+# RESULTADOS EXACTOS Y ALERTAS 
 # ---------------------------------------------------------
 
 gan_bs = confirmado_bs_recibidos - cap_bs
@@ -284,16 +277,14 @@ st.markdown("---")
 st.markdown("### 📂 REGISTRO DE MOVIMIENTOS")
 with st.expander("Haz clic aquí para ver o eliminar tus movimientos registrados"):
     if not df_h.empty:
-        # Mostrar el dataframe filtrando las columnas más importantes para no saturar la pantalla móvil
         df_mostrar = df_h[['Día', 'Cuenta', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Ganancia_Bs', 'ROI']].tail(10).sort_index(ascending=False)
         st.dataframe(df_mostrar, use_container_width=True)
         
-        # NUEVO: Botones de Gestión de Historial
         st.markdown("#### ⚙️ Gestión de Datos")
         col_del1, col_del2 = st.columns(2)
         with col_del1:
             if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
-                df_nuevo = df_h.iloc[:-1] # Elimina la última fila
+                df_nuevo = df_h.iloc[:-1]
                 df_nuevo.to_csv(archivo_historial, index=False)
                 st.success("Última vuelta eliminada. ¡Actualiza la página para ver los cambios!")
         with col_del2:
