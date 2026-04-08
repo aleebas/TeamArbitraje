@@ -282,10 +282,24 @@ if st.button("💾 GUARDAR VUELTA EXACTA", use_container_width=True):
 
 st.markdown("---")
 st.markdown("### 📂 REGISTRO DE MOVIMIENTOS")
-with st.expander("Haz clic aquí para ver todos tus movimientos registrados"):
+with st.expander("Haz clic aquí para ver o eliminar tus movimientos registrados"):
     if not df_h.empty:
         # Mostrar el dataframe filtrando las columnas más importantes para no saturar la pantalla móvil
         df_mostrar = df_h[['Día', 'Cuenta', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Ganancia_Bs', 'ROI']].tail(10).sort_index(ascending=False)
         st.dataframe(df_mostrar, use_container_width=True)
+        
+        # NUEVO: Botones de Gestión de Historial
+        st.markdown("#### ⚙️ Gestión de Datos")
+        col_del1, col_del2 = st.columns(2)
+        with col_del1:
+            if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
+                df_nuevo = df_h.iloc[:-1] # Elimina la última fila
+                df_nuevo.to_csv(archivo_historial, index=False)
+                st.success("Última vuelta eliminada. ¡Actualiza la página para ver los cambios!")
+        with col_del2:
+            if st.button("🚨 Borrar TODO el Historial", use_container_width=True):
+                if os.path.exists(archivo_historial):
+                    os.remove(archivo_historial)
+                st.success("Historial reseteado por completo. ¡Actualiza la página!")
     else:
         st.info("Aún no hay operaciones registradas.")
