@@ -54,7 +54,6 @@ st.markdown("""
     
     .highlight-action { background: linear-gradient(135deg, #fef08a, #facc15); padding: 6px; border-radius: 8px; color: #000; text-align: center; font-size: 15px; font-weight: 900; margin-bottom: 5px; border: 1px dashed #854d0e; }
     
-    /* NUEVO: ESTILO DEL RESUMEN DIARIO DINÁMICO */
     .summary-box { 
         background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98)); 
         border-radius: 16px; 
@@ -286,11 +285,10 @@ if usd_en_banco > 0 and roi > 0:
     st.markdown(html_radar, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# NUEVO: RESUMEN GLOBAL DIARIO (Reemplaza Ticket)
+# NUEVO: RESUMEN GLOBAL DIARIO
 # ---------------------------------------------------------
-df_hoy_global = df_h[df_h['Día'] == hoy_str]
+df_hoy_global = df_h[df_h['Día'] == hoy_str].copy()
 
-# Calculos del resumen de hoy (Registrados)
 if not df_hoy_global.empty:
     vueltas_totales_hoy = len(df_hoy_global)
     cuentas_usadas = df_hoy_global['Cuenta'].nunique()
@@ -299,7 +297,6 @@ if not df_hoy_global.empty:
     promedio_roi = df_hoy_global['ROI'].mean()
     ganancia_total_bs = df_hoy_global['Ganancia_Bs'].sum()
     
-    # Calcular USDT aproximado dividiendo la ganancia de cada vuelta por su tasa de venta
     df_hoy_global['Ganancia_USDT'] = df_hoy_global['Ganancia_Bs'] / df_hoy_global['Tasa_Venta']
     ganancia_total_usdt = df_hoy_global['Ganancia_USDT'].sum()
     volumen_usd = df_hoy_global['USD_Comprados'].sum()
@@ -347,4 +344,9 @@ if st.button("💾 GUARDAR VUELTA EXACTA", use_container_width=True):
         st.error(f"❌ No puedes guardar. Supera los límites operativos de la {cuenta_activa}.")
     else:
         nuevo_registro = {
-            "Fecha": datetime.now().
+            "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), 
+            "Día": hoy_str,
+            "Mes": mes_str,
+            "Cuenta": cuenta_activa,
+            "Cap_Invertido_Bs": hist_cap_invertido,
+            "USD_Comprad
