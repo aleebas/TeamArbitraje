@@ -9,20 +9,15 @@ st.set_page_config(page_title="Team Arbitraje Directo", layout="wide", initial_s
 # Estilo Premium (Glassmorphism) COMPACTADO
 st.markdown("""
     <style>
-    /* Incrementar padding superior para evitar que la barra del sistema corte el título */
     .block-container { padding-top: 3.5rem !important; padding-bottom: 1.0rem !important; }
-    
-    /* Fondo principal y textos */
     .main { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
     h1, h2, h3, h4, p, label, .stMarkdown { color: #f8fafc !important; font-weight: 700 !important; }
     
-    /* Achicar Títulos para ahorrar espacio */
     h1 { font-size: 1.5rem !important; margin-bottom: 0rem !important; padding-bottom: 0 !important; }
     h3 { font-size: 1.1rem !important; margin-bottom: 0.1rem !important; margin-top: 0.5rem !important; }
     h4 { font-size: 1.0rem !important; margin-bottom: 0.2rem !important; }
     hr { margin-top: 0.5rem !important; margin-bottom: 0.8rem !important; border-color: rgba(255,255,255,0.05) !important; }
     
-    /* Inputs Modernos y más delgados */
     .stNumberInput div div input { 
         color: #38bdf8 !important; 
         background-color: rgba(15, 23, 42, 0.8) !important; 
@@ -37,7 +32,6 @@ st.markdown("""
     }
     .stNumberInput div div input:focus { border-color: #38bdf8 !important; box-shadow: 0 0 8px rgba(56,189,248,0.2) !important; }
     
-    /* Dashboard y Pasos Glassmorphism COMPACTOS */
     .dashboard-panel, .radar-box { 
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
         backdrop-filter: blur(12px);
@@ -48,7 +42,6 @@ st.markdown("""
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); 
     }
     
-    /* Cajas de Métricas Estilo Neón COMPACTAS */
     div[data-testid="stMetric"] { 
         background: linear-gradient(145deg, #1e293b, #0f172a) !important; 
         padding: 6px 10px !important; 
@@ -59,15 +52,26 @@ st.markdown("""
     div[data-testid="stMetricValue"] { font-size: 1.2rem !important; font-weight: 900 !important; color: #38bdf8 !important; text-shadow: 0 0 5px rgba(56,189,248,0.3); }
     div[data-testid="stMetricLabel"] p { font-weight: 800 !important; color: #94a3b8 !important; font-size: 11px !important; letter-spacing: 0.5px; margin-bottom: 0 !important; }
     
-    /* Alertas y Tickets COMPACTOS */
     .highlight-action { background: linear-gradient(135deg, #fef08a, #facc15); padding: 6px; border-radius: 8px; color: #000; text-align: center; font-size: 15px; font-weight: 900; margin-bottom: 5px; border: 1px dashed #854d0e; }
-    .ticket-wrapper { display: flex; justify-content: center; padding: 5px; }
-    .whatsapp-ticket { background: linear-gradient(to bottom, #ffffff, #f8fafc); border: 3px dashed #16a34a; border-radius: 20px; padding: 12px; width: 100%; max-width: 450px; color: #000000; margin-top: 5px;}
-    .ticket-header { text-align: center; font-size: 15px; font-weight: 900; color: #16a34a; border-bottom: 2px solid #16a34a; padding-bottom: 6px; margin-bottom: 10px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid #cbd5e1; color: #000000; align-items: center; }
-    .ticket-label { font-size: 13px; font-weight: 700; color: #334155; }
-    .ticket-value { font-size: 13px; font-weight: 900; color: #000000; text-align: right; }
-    .ticket-roi-box { text-align: center; font-size: 16px; font-weight: 900; color: #16a34a; background-color: #f0fdf4; padding: 8px; border-radius: 12px; margin-top: 10px; border: 2px solid #16a34a; }
+    
+    /* NUEVO: ESTILO DEL RESUMEN DIARIO DINÁMICO */
+    .summary-box { 
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.98)); 
+        border-radius: 16px; 
+        padding: 18px; 
+        border: 1px solid rgba(56,189,248,0.4); 
+        box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
+        margin-top: 20px; 
+        margin-bottom: 15px;
+    }
+    .summary-header { text-align: center; color: #facc15; font-size: 16px; font-weight: 900; letter-spacing: 1px; border-bottom: 1px dashed rgba(255,255,255,0.2); padding-bottom: 10px; margin-bottom: 15px; text-transform: uppercase; }
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .summary-item { background: rgba(0,0,0,0.25); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+    .summary-item-full { grid-column: span 2; background: linear-gradient(to right, rgba(16,185,129,0.1), rgba(15,23,42,0.5)); border: 1px solid rgba(16,185,129,0.4); padding: 15px; border-radius: 12px; text-align: center;}
+    .sum-label { font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; display: block; }
+    .sum-val { font-size: 15px; color: #e2e8f0; font-weight: 900; }
+    .sum-val.highlight { color: #38bdf8; font-size: 17px; }
+    .sum-val.success { color: #10b981; font-size: 22px; text-shadow: 0 0 10px rgba(16,185,129,0.3);}
     </style>
     """, unsafe_allow_html=True)
 
@@ -135,9 +139,8 @@ c_tarjeta = 0.025 # 2.5%
 c_binance = 0.033 # 3.3%
 tasa_real_b = tasa_c * (1 + c_asig)
 
-# 🪟 ESPACIO RESERVADO PARA EL RADAR DE PROYECCIÓN DINÁMICO
+# 🪟 ESPACIO RESERVADO PARA EL RADAR
 radar_placeholder = st.empty()
-
 st.markdown("<hr>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
@@ -147,7 +150,6 @@ tipo_vuelta = st.radio("🔄 Dirección de la Vuelta:", ["➡️ Normal (Comprar
 
 if tipo_vuelta == "➡️ Normal (Comprar BDV primero)":
     st.markdown("<h3 style='margin:0;'>1️⃣ Fondeo BDV</h3>", unsafe_allow_html=True)
-    
     tipo_ingreso = st.radio("Ingresar monto en:", ["Bolívares (Bs)", "Dólares (USD)"], horizontal=True, label_visibility="collapsed")
     
     if tipo_ingreso == "Bolívares (Bs)":
@@ -219,15 +221,13 @@ else:
     usd_en_banco = usd_en_banco_inv 
 
 # ---------------------------------------------------------
-# INYECCIÓN DINÁMICA DEL RADAR DE PROYECCIÓN (Sube al espacio vacío)
+# INYECCIÓN DEL RADAR EN VIVO
 # ---------------------------------------------------------
-# Cálculos teóricos basados EXCLUSIVAMENTE en el fondeo elegido
 cap_bs_teorico = hist_cap_invertido
 usd_base_teorico = max(0.0, (usd_en_banco - 1.0) if dejar_dolar else usd_en_banco)
 usdt_finales_teorico = usd_base_teorico * (1 - c_tarjeta) * (1 - c_binance)
 
 tasa_sugerida_2pct = (cap_bs_teorico * 1.02) / usdt_finales_teorico if usdt_finales_teorico > 0 else 0
-
 bs_recibidos_teorico = usdt_finales_teorico * tasa_v
 gan_bs_teorico = bs_recibidos_teorico - cap_bs_teorico
 gan_usdt_teorico = gan_bs_teorico / tasa_v if tasa_v > 0 else 0
@@ -250,12 +250,11 @@ proyeccion_html = f"""
     </div>
 </div>
 """
-# Inyectar el HTML en el contenedor de arriba
 radar_placeholder.markdown(proyeccion_html, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------
-# MÉTRICAS Y ALERTAS FINALES
+# MÉTRICAS EN VIVO
 # ---------------------------------------------------------
 st.markdown("<hr style='margin-bottom:8px;'>", unsafe_allow_html=True)
 res1, res2, res3 = st.columns(3)
@@ -286,18 +285,59 @@ if usd_en_banco > 0 and roi > 0:
     html_radar = f"<div class='radar-box'><p style='margin:0; font-size:12px; color:#38bdf8;'>🔄 Radar de Interés: <b>{vueltas_posibles} vueltas más.</b> Límite día en: $ {cupo_disponible_sim:,.0f} (Excedente $ {excedente:,.0f}).</p></div>"
     st.markdown(html_radar, unsafe_allow_html=True)
 
-ticket_html = f"""
-<div class="ticket-wrapper">
-    <div class="whatsapp-ticket">
-        <div class="ticket-header">📋 REPORTE DIRECTO - BDV</div>
-        <div class="ticket-row"><span class="ticket-label">💵 Cap. Invertido:</span><span class="ticket-value">Bs. {hist_cap_invertido:,.2f}</span></div>
-        <div class="ticket-row"><span class="ticket-label">📈 Tasa Venta:</span><span class="ticket-value">Bs. {tasa_v:,.2f}</span></div>
-        <div class="ticket-row" style="border:none;"><span class="ticket-label">🟢 Ganancia:</span><span class="ticket-value" style="color:#16a34a;">Bs. {gan_bs:,.2f}</span></div>
-        <div class="ticket-roi-box">🚀 ROI REAL: {roi:.2f}%</div>
+# ---------------------------------------------------------
+# NUEVO: RESUMEN GLOBAL DIARIO (Reemplaza Ticket)
+# ---------------------------------------------------------
+df_hoy_global = df_h[df_h['Día'] == hoy_str]
+
+# Calculos del resumen de hoy (Registrados)
+if not df_hoy_global.empty:
+    vueltas_totales_hoy = len(df_hoy_global)
+    cuentas_usadas = df_hoy_global['Cuenta'].nunique()
+    nombres_cuentas = ", ".join(df_hoy_global['Cuenta'].str.replace('Cuenta ', '#').unique())
+    promedio_tasa_v = df_hoy_global['Tasa_Venta'].mean()
+    promedio_roi = df_hoy_global['ROI'].mean()
+    ganancia_total_bs = df_hoy_global['Ganancia_Bs'].sum()
+    
+    # Calcular USDT aproximado dividiendo la ganancia de cada vuelta por su tasa de venta
+    df_hoy_global['Ganancia_USDT'] = df_hoy_global['Ganancia_Bs'] / df_hoy_global['Tasa_Venta']
+    ganancia_total_usdt = df_hoy_global['Ganancia_USDT'].sum()
+    volumen_usd = df_hoy_global['USD_Comprados'].sum()
+else:
+    vueltas_totales_hoy, cuentas_usadas, nombres_cuentas = 0, 0, "Ninguna"
+    promedio_tasa_v, promedio_roi, ganancia_total_bs, ganancia_total_usdt, volumen_usd = 0.0, 0.0, 0.0, 0.0, 0.0
+
+summary_html = f"""
+<div class="summary-box">
+    <div class="summary-header">🏆 RESUMEN GLOBAL DEL DÍA</div>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <span class="sum-label">🔄 Vueltas / Cuentas</span>
+            <span class="sum-val">{vueltas_totales_hoy} <span style="font-size:11px; color:#94a3b8;">({nombres_cuentas})</span></span>
+        </div>
+        <div class="summary-item">
+            <span class="sum-label">💸 Volumen Movido</span>
+            <span class="sum-val highlight">$ {volumen_usd:,.2f}</span>
+        </div>
+        <div class="summary-item">
+            <span class="sum-label">📈 Tasa Promedio</span>
+            <span class="sum-val">Bs. {promedio_tasa_v:,.2f}</span>
+        </div>
+        <div class="summary-item">
+            <span class="sum-label">🚀 ROI Promedio</span>
+            <span class="sum-val" style="color: {'#10b981' if promedio_roi >= 2 else '#ef4444'};">{promedio_roi:,.2f}%</span>
+        </div>
+        <div class="summary-item-full">
+            <span class="sum-label" style="color: #38bdf8; font-size:12px;">💰 GANANCIA TOTAL HOY</span>
+            <div style="display:flex; justify-content:center; align-items:baseline; gap:10px; margin-top:5px;">
+                <span class="sum-val success">Bs. {ganancia_total_bs:,.2f}</span>
+                <span style="color:#e2e8f0; font-weight:900; font-size:16px;">≈ ₮ {ganancia_total_usdt:,.2f}</span>
+            </div>
+        </div>
     </div>
 </div>
 """
-st.write(ticket_html, unsafe_allow_html=True)
+st.markdown(summary_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
 # GUARDADO Y VISUALIZACIÓN DE HISTORIAL
@@ -307,38 +347,4 @@ if st.button("💾 GUARDAR VUELTA EXACTA", use_container_width=True):
         st.error(f"❌ No puedes guardar. Supera los límites operativos de la {cuenta_activa}.")
     else:
         nuevo_registro = {
-            "Fecha": datetime.now().strftime("%Y-%m-%d %H:%M"), 
-            "Día": hoy_str,
-            "Mes": mes_str,
-            "Cuenta": cuenta_activa,
-            "Cap_Invertido_Bs": hist_cap_invertido,
-            "USD_Comprados": hist_usd_comprados, 
-            "USDT_Vendidos": hist_usdt_vendidos,
-            "Tasa_Venta": tasa_v,
-            "Bs_Recibidos": hist_bs_recibidos,
-            "Ganancia_Bs": gan_bs, 
-            "ROI": roi
-        }
-        df_nuevo = pd.DataFrame([nuevo_registro])
-        st.session_state.historial_df = pd.concat([st.session_state.historial_df, df_nuevo], ignore_index=True)
-        st.session_state.historial_df.to_csv(archivo_historial, index=False)
-        st.success(f"¡Vuelta registrada en {cuenta_activa}! Actualiza para ver el Récord.")
-        st.balloons()
-
-with st.expander("📂 VER HISTORIAL"):
-    if not st.session_state.historial_df.empty:
-        df_mostrar = st.session_state.historial_df[['Día', 'Cuenta', 'USD_Comprados', 'Ganancia_Bs', 'ROI']].tail(10).sort_index(ascending=False)
-        st.dataframe(df_mostrar, use_container_width=True)
-        
-        col_del1, col_del2 = st.columns(2)
-        with col_del1:
-            if st.button("🗑️ Borrar Última", use_container_width=True):
-                st.session_state.historial_df = st.session_state.historial_df.iloc[:-1]
-                st.session_state.historial_df.to_csv(archivo_historial, index=False)
-                st.success("Última vuelta eliminada. ¡Actualiza!")
-        with col_del2:
-            if st.button("🚨 Borrar TODO", use_container_width=True):
-                st.session_state.historial_df = pd.DataFrame(columns=columnas_historial)
-                if os.path.exists(archivo_historial):
-                    os.remove(archivo_historial)
-                st.success("Historial reseteado por completo. ¡Actualiza!")
+            "Fecha": datetime.now().
