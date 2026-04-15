@@ -3,10 +3,10 @@ import pandas as pd
 from datetime import datetime
 import os
 
-# Configuración inicial de la página (Más compacta)
+# Configuración inicial de la página
 st.set_page_config(page_title="Team Arbitraje Directo", layout="wide", initial_sidebar_state="collapsed")
 
-# Estilo Premium (Glassmorphism) COMPACTADO PARA CERO SCROLL
+# Estilo Premium (Glassmorphism) COMPACTADO
 st.markdown("""
     <style>
     /* Incrementar padding superior para evitar que la barra del sistema corte el título */
@@ -96,7 +96,7 @@ if 'historial_df' not in st.session_state:
 df_h = st.session_state.historial_df
 
 # ---------------------------------------------------------
-# DASHBOARD DE CONTROL (Cero espacios vacíos)
+# DASHBOARD DE CONTROL 
 # ---------------------------------------------------------
 cuentas_lista = [f"Cuenta {i}" for i in range(1, 7)]
 cuenta_activa = st.session_state.get('cuenta_activa', cuentas_lista[0])
@@ -111,7 +111,6 @@ vueltas_hoy = len(df_cuenta_hoy)
 ganancia_acumulada = df_cuenta_hoy['Ganancia_Bs'].sum() if not df_cuenta_hoy.empty else 0.0
 ganancia_total_hoy = df_h[df_h['Día'] == hoy_str]['Ganancia_Bs'].sum() if not df_h.empty else 0.0
 
-# HTML encapsulado correctamente
 dashboard_html = f"""
 <div class='dashboard-panel'>
     <p style='text-align: center; margin: 0; font-size: 13px; color:#94a3b8; font-weight:800;'>🎛️ PANEL DE CONTROL</p>
@@ -123,7 +122,7 @@ st.markdown(dashboard_html, unsafe_allow_html=True)
 st.session_state.cuenta_activa = st.selectbox("💳 Cuenta Activa:", cuentas_lista, index=cuentas_lista.index(cuenta_activa), label_visibility="collapsed")
 
 # ---------------------------------------------------------
-# FLUJO OPERATIVO Y TASAS
+# TASAS BASE
 # ---------------------------------------------------------
 col_t1, col_t2 = st.columns(2)
 with col_t1:
@@ -136,40 +135,8 @@ c_tarjeta = 0.025 # 2.5%
 c_binance = 0.033 # 3.3%
 tasa_real_b = tasa_c * (1 + c_asig)
 
-# ---------------------------------------------------------
-# NUEVO: RADAR DE PROYECCIÓN EN VIVO
-# ---------------------------------------------------------
-# Matemática teórica sobre un bloque de $100
-cap_bs_teorico = 100 * tasa_real_b
-usdt_finales_teorico = 100 * (1 - c_tarjeta) * (1 - c_binance)
-
-# 1. Calcular tasa sugerida para asegurar 2% de ROI neto
-tasa_sugerida_2pct = (cap_bs_teorico * 1.02) / usdt_finales_teorico if usdt_finales_teorico > 0 else 0
-
-# 2. Proyección exacta de la Tasa de Venta (tasa_v) testeada
-bs_recibidos_teorico = usdt_finales_teorico * tasa_v
-gan_bs_teorico = bs_recibidos_teorico - cap_bs_teorico
-gan_usdt_teorico = gan_bs_teorico / tasa_v if tasa_v > 0 else 0
-roi_teorico = (gan_bs_teorico / cap_bs_teorico) * 100 if cap_bs_teorico > 0 else 0
-color_roi = '#ef4444' if roi_teorico < 2 else '#10b981' # Rojo si es menor a 2%, Verde si es mayor
-
-proyeccion_html = f"""
-<div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.6)); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 12px; margin-top: 5px; margin-bottom: 15px;">
-    <p style="margin: 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 800;">🔍 Radar de Proyección P2P (Muestra de $100)</p>
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
-        <div>
-            <p style="margin: 0; font-size: 13px; color: #e2e8f0;">🎯 Sugerida (ROI 2%): <b style="color: #facc15;">Bs. {tasa_sugerida_2pct:,.2f}</b></p>
-            <p style="margin: 0; font-size: 13px; color: #e2e8f0; margin-top: 3px;">📊 ROI Proyectado: <b style="color: {color_roi};">{roi_teorico:,.2f}%</b></p>
-        </div>
-        <div style="text-align: right;">
-            <p style="margin: 0; font-size: 10px; color: #94a3b8;">GANANCIA PROYECTADA</p>
-            <p style="margin: 0; font-size: 16px; font-weight: 900; color: #38bdf8;">Bs. {gan_bs_teorico:,.2f}</p>
-            <p style="margin: 0; font-size: 13px; font-weight: 800; color: #10b981;">≈ ₮ {gan_usdt_teorico:,.2f}</p>
-        </div>
-    </div>
-</div>
-"""
-st.markdown(proyeccion_html, unsafe_allow_html=True)
+# 🪟 ESPACIO RESERVADO PARA EL RADAR DE PROYECCIÓN DINÁMICO
+radar_placeholder = st.empty()
 
 st.markdown("<hr>", unsafe_allow_html=True)
 
@@ -250,6 +217,42 @@ else:
     hist_usdt_vendidos = usdt_iniciales
     hist_bs_recibidos = confirmado_bs_inverso
     usd_en_banco = usd_en_banco_inv 
+
+# ---------------------------------------------------------
+# INYECCIÓN DINÁMICA DEL RADAR DE PROYECCIÓN (Sube al espacio vacío)
+# ---------------------------------------------------------
+# Cálculos teóricos basados EXCLUSIVAMENTE en el fondeo elegido
+cap_bs_teorico = hist_cap_invertido
+usd_base_teorico = max(0.0, (usd_en_banco - 1.0) if dejar_dolar else usd_en_banco)
+usdt_finales_teorico = usd_base_teorico * (1 - c_tarjeta) * (1 - c_binance)
+
+tasa_sugerida_2pct = (cap_bs_teorico * 1.02) / usdt_finales_teorico if usdt_finales_teorico > 0 else 0
+
+bs_recibidos_teorico = usdt_finales_teorico * tasa_v
+gan_bs_teorico = bs_recibidos_teorico - cap_bs_teorico
+gan_usdt_teorico = gan_bs_teorico / tasa_v if tasa_v > 0 else 0
+roi_teorico = (gan_bs_teorico / cap_bs_teorico) * 100 if cap_bs_teorico > 0 else 0
+color_roi = '#ef4444' if roi_teorico < 2 else '#10b981'
+
+proyeccion_html = f"""
+<div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(15, 23, 42, 0.6)); border: 1px solid rgba(16, 185, 129, 0.3); padding: 12px; border-radius: 12px; margin-top: 5px; margin-bottom: 15px;">
+    <p style="margin: 0; font-size: 11px; color: #94a3b8; text-transform: uppercase; font-weight: 800;">🔍 Radar Proyección P2P (Basado en $ {usd_en_banco:,.2f})</p>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+        <div>
+            <p style="margin: 0; font-size: 13px; color: #e2e8f0;">🎯 Sugerida (ROI 2%): <b style="color: #facc15;">Bs. {tasa_sugerida_2pct:,.2f}</b></p>
+            <p style="margin: 0; font-size: 13px; color: #e2e8f0; margin-top: 3px;">📊 ROI Proyectado: <b style="color: {color_roi};">{roi_teorico:,.2f}%</b></p>
+        </div>
+        <div style="text-align: right;">
+            <p style="margin: 0; font-size: 10px; color: #94a3b8;">GANANCIA PROYECTADA</p>
+            <p style="margin: 0; font-size: 16px; font-weight: 900; color: #38bdf8;">Bs. {gan_bs_teorico:,.2f}</p>
+            <p style="margin: 0; font-size: 13px; font-weight: 800; color: #10b981;">≈ ₮ {gan_usdt_teorico:,.2f}</p>
+        </div>
+    </div>
+</div>
+"""
+# Inyectar el HTML en el contenedor de arriba
+radar_placeholder.markdown(proyeccion_html, unsafe_allow_html=True)
+
 
 # ---------------------------------------------------------
 # MÉTRICAS Y ALERTAS FINALES
