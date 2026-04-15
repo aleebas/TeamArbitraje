@@ -6,45 +6,83 @@ import os
 # Configuración inicial de la página
 st.set_page_config(page_title="Team Arbitraje Directo", layout="wide", initial_sidebar_state="collapsed")
 
-# Estilo Restful Blue, Ticket y Dashboard Optimizado
+# Estilo Premium (Glassmorphism y Animaciones)
 st.markdown("""
     <style>
-    .main { background-color: #10172a; color: #e2e8f0; }
+    /* Fondo principal y textos */
+    .main { background-color: #0f172a; color: #e2e8f0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+    h1, h2, h3, h4, p, label, .stMarkdown { color: #f8fafc !important; font-weight: 700 !important; }
     
-    /* Cajas de Métricas */
-    div[data-testid="stMetric"] { background-color: #1e293b !important; padding: 10px; border-radius: 12px; border: 1px solid #334155 !important; }
-    div[data-testid="stMetricValue"] { font-weight: 900 !important; color: #38bdf8 !important; }
-    div[data-testid="stMetricLabel"] p { font-weight: 800 !important; color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; }
+    /* Cajas de Métricas Estilo Neón */
+    div[data-testid="stMetric"] { 
+        background: linear-gradient(145deg, #1e293b, #0f172a) !important; 
+        padding: 15px; 
+        border-radius: 16px; 
+        border: 1px solid rgba(56, 189, 248, 0.2) !important; 
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+    div[data-testid="stMetricValue"] { font-weight: 900 !important; color: #38bdf8 !important; text-shadow: 0 0 10px rgba(56,189,248,0.3); }
+    div[data-testid="stMetricLabel"] p { font-weight: 800 !important; color: #94a3b8 !important; font-size: 13px !important; letter-spacing: 1px; }
     
-    /* Textos Generales */
-    h1, h2, h3, h4, p, label, .stMarkdown { color: #e2e8f0 !important; font-weight: 700 !important; }
+    /* Inputs Modernos */
+    .stNumberInput div div input { 
+        color: #38bdf8 !important; 
+        background-color: rgba(15, 23, 42, 0.8) !important; 
+        border: 2px solid #334155 !important; 
+        border-radius: 10px;
+        font-weight: 900 !important; 
+        font-size: 18px !important; 
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+    .stNumberInput div div input:focus { border-color: #38bdf8 !important; box-shadow: 0 0 10px rgba(56,189,248,0.2) !important; }
     
-    /* Inputs */
-    .stNumberInput div div input { color: #38bdf8 !important; background-color: #0f172a !important; border: 2px solid #334155 !important; font-weight: 900 !important; font-size: 18px !important; text-align: center;}
-    .stNumberInput div div input:focus { border-color: #38bdf8 !important; }
+    /* Dashboard Glassmorphism */
+    .dashboard-panel { 
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%);
+        backdrop-filter: blur(12px);
+        padding: 25px; 
+        border-radius: 20px; 
+        border: 1px solid rgba(255, 255, 255, 0.1); 
+        margin-bottom: 30px; 
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); 
+    }
     
-    /* Elementos UI Específicos */
-    .dashboard-panel { background-color: #0f172a; padding: 20px; border-radius: 15px; border: 1px solid #38bdf8; margin-bottom: 25px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.1); }
-    .step-box { background-color: #1e293b; padding: 15px 20px; border-radius: 12px; border-left: 5px solid #16a34a; margin-bottom: 15px; margin-top: 15px;}
-    .highlight-action { background-color: #fef08a; padding: 10px; border-radius: 8px; color: #000; text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 10px; border: 2px dashed #ca8a04; }
+    /* Cajas de Pasos Animadas */
+    .step-box { 
+        background: linear-gradient(to right, rgba(30, 41, 59, 0.6), rgba(15, 23, 42, 0.4));
+        padding: 18px 25px; 
+        border-radius: 14px; 
+        border: 1px solid rgba(255,255,255,0.05);
+        border-left: 5px solid #38bdf8; 
+        margin-bottom: 20px; 
+        margin-top: 15px;
+        transition: all 0.3s ease;
+    }
+    .step-box:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 25px rgba(0,0,0,0.5);
+        border-left: 5px solid #10b981;
+    }
     
-    /* Ticket y Radar */
-    .ticket-wrapper { display: flex; justify-content: center; padding: 10px; }
-    .whatsapp-ticket { background-color: #ffffff; border: 4px dashed #16a34a; border-radius: 20px; padding: 20px; width: 100%; max-width: 450px; color: #000000; box-shadow: 0 8px 20px rgba(0,0,0,0.3); margin-top: 20px;}
-    .ticket-header { text-align: center; font-size: 18px; font-weight: 900; color: #16a34a; border-bottom: 3px solid #16a34a; padding-bottom: 10px; margin-bottom: 15px; }
-    .ticket-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #e2e8f0; color: #000000; align-items: center; }
-    .ticket-label { font-size: 15px; font-weight: 700; color: #334155; }
-    .ticket-value { font-size: 15px; font-weight: 900; color: #000000; text-align: right; }
-    .ticket-roi-box { text-align: center; font-size: 22px; font-weight: 900; color: #16a34a; background-color: #f0fdf4; padding: 12px; border-radius: 12px; margin-top: 15px; border: 2px solid #16a34a; }
-    .radar-box { background-color: #1e293b; padding: 15px; border-radius: 10px; border: 1px solid #3b82f6; border-left: 5px solid #3b82f6; margin-top: 15px; margin-bottom: 15px; }
+    /* Alertas y Tickets */
+    .highlight-action { background: linear-gradient(135deg, #fef08a, #facc15); padding: 15px; border-radius: 12px; color: #000; text-align: center; font-size: 18px; font-weight: 900; margin-bottom: 10px; border: 2px dashed #854d0e; box-shadow: 0 4px 15px rgba(250, 204, 21, 0.2); }
+    .ticket-wrapper { display: flex; justify-content: center; padding: 15px; }
+    .whatsapp-ticket { background: linear-gradient(to bottom, #ffffff, #f8fafc); border: 4px dashed #16a34a; border-radius: 24px; padding: 25px; width: 100%; max-width: 450px; color: #000000; box-shadow: 0 15px 35px rgba(0,0,0,0.3); margin-top: 20px;}
+    .ticket-header { text-align: center; font-size: 20px; font-weight: 900; color: #16a34a; border-bottom: 3px solid #16a34a; padding-bottom: 12px; margin-bottom: 18px; }
+    .ticket-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #cbd5e1; color: #000000; align-items: center; }
+    .ticket-label { font-size: 16px; font-weight: 700; color: #334155; }
+    .ticket-value { font-size: 16px; font-weight: 900; color: #000000; text-align: right; }
+    .ticket-roi-box { text-align: center; font-size: 24px; font-weight: 900; color: #16a34a; background-color: #f0fdf4; padding: 15px; border-radius: 16px; margin-top: 20px; border: 2px solid #16a34a; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+    .radar-box { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(5px); padding: 20px; border-radius: 14px; border: 1px solid rgba(59, 130, 246, 0.3); border-left: 5px solid #3b82f6; margin-top: 20px; margin-bottom: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
     </style>
     """, unsafe_allow_html=True)
 
 # Título Principal
-st.markdown("<h1 style='text-align: center; color: #38bdf8 !important;'>🚀 RUTA DIRECTA (BDV)</h1><hr style='margin-bottom: 15px; border-color: #334155;'>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #38bdf8 !important; text-shadow: 0 2px 10px rgba(56,189,248,0.2);'>🚀 RUTA DIRECTA (BDV)</h1><hr style='border-color: rgba(255,255,255,0.1); margin-bottom: 25px;'>", unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# LÓGICA DE HISTORIAL Y FECHAS
+# LÓGICA DE HISTORIAL BLINDADA (SESSION STATE + CSV)
 # ---------------------------------------------------------
 hoy_str = datetime.now().strftime("%Y-%m-%d")
 mes_str = datetime.now().strftime("%Y-%m")
@@ -52,19 +90,24 @@ archivo_historial = "historial_directo.csv"
 
 columnas_historial = ['Fecha', 'Día', 'Mes', 'Cuenta', 'Cap_Invertido_Bs', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Bs_Recibidos', 'Ganancia_Bs', 'ROI']
 
-if os.path.exists(archivo_historial):
-    df_h = pd.read_csv(archivo_historial)
-    for col in columnas_historial:
-        if col not in df_h.columns:
-            df_h[col] = 0.0
-else:
-    df_h = pd.DataFrame(columns=columnas_historial)
+# Proteger la caché guardando los datos en la memoria de la sesión
+if 'historial_df' not in st.session_state:
+    if os.path.exists(archivo_historial):
+        df_temp = pd.read_csv(archivo_historial)
+        for col in columnas_historial:
+            if col not in df_temp.columns:
+                df_temp[col] = 0.0
+        st.session_state.historial_df = df_temp
+    else:
+        st.session_state.historial_df = pd.DataFrame(columns=columnas_historial)
+
+df_h = st.session_state.historial_df
 
 # ---------------------------------------------------------
 # DASHBOARD DE CONTROL (Módulo Frontal)
 # ---------------------------------------------------------
 st.markdown("<div class='dashboard-panel'>", unsafe_allow_html=True)
-st.markdown("<h3 style='margin-top: 0; text-align: center;'>🎛️ PANEL DE CONTROL MULTI-CUENTA</h3>", unsafe_allow_html=True)
+st.markdown("<h3 style='margin-top: 0; text-align: center; letter-spacing: 1px;'>🎛️ PANEL DE CONTROL MULTI-CUENTA</h3>", unsafe_allow_html=True)
 
 col_d1, col_d2, col_d3 = st.columns([1, 1.5, 1.5])
 
@@ -72,7 +115,7 @@ with col_d1:
     cuentas_lista = [f"Cuenta {i}" for i in range(1, 7)]
     cuenta_activa = st.selectbox("💳 Seleccionar Cuenta:", cuentas_lista, label_visibility="collapsed")
     vueltas_hoy = len(df_h[(df_h['Cuenta'] == cuenta_activa) & (df_h['Día'] == hoy_str)])
-    st.markdown(f"<p style='text-align:center; color:#10b981 !important; font-size:18px;'>Vueltas hoy: <b>{vueltas_hoy}</b></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='text-align:center; color:#10b981 !important; font-size:18px; margin-top:10px;'>Vueltas hoy: <b>{vueltas_hoy}</b></p>", unsafe_allow_html=True)
 
 df_cuenta_hoy = df_h[(df_h['Cuenta'] == cuenta_activa) & (df_h['Día'] == hoy_str)]
 df_cuenta_mes = df_h[(df_h['Cuenta'] == cuenta_activa) & (df_h['Mes'] == mes_str)]
@@ -90,9 +133,9 @@ with col_d3:
     mejor_vuelta = df_cuenta_hoy['Ganancia_Bs'].max() if not df_cuenta_hoy.empty else 0.0
     ganancia_total_hoy = df_h[df_h['Día'] == hoy_str]['Ganancia_Bs'].sum() if not df_h.empty else 0.0
     
-    st.markdown(f"**💰 Ganancia ({cuenta_activa}):** <span style='color:#16a34a; font-size:18px;'>Bs. {ganancia_acumulada:,.2f}</span>", unsafe_allow_html=True)
-    st.markdown(f"**🔥 Mejor Vuelta:** <span style='color:#38bdf8; font-size:16px;'>Bs. {mejor_vuelta:,.2f}</span>", unsafe_allow_html=True)
-    st.markdown(f"**🌍 Ganancia GLOBAL (Hoy):** <span style='color:#facc15; font-size:20px;'>Bs. {ganancia_total_hoy:,.2f}</span>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-bottom:5px;'><b>💰 Ganancia ({cuenta_activa}):</b> <span style='color:#16a34a; font-size:18px;'>Bs. {ganancia_acumulada:,.2f}</span></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-bottom:5px;'><b>🔥 Mejor Vuelta:</b> <span style='color:#38bdf8; font-size:16px;'>Bs. {mejor_vuelta:,.2f}</span></p>", unsafe_allow_html=True)
+    st.markdown(f"<p style='margin-bottom:0;'><b>🌍 Ganancia GLOBAL (Hoy):</b> <span style='color:#facc15; font-size:20px; font-weight:900;'>Bs. {ganancia_total_hoy:,.2f}</span></p>", unsafe_allow_html=True)
 
 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -113,7 +156,7 @@ with col_t2:
 
 tasa_real_b = tasa_c * (1 + c_asig)
 
-st.markdown("---")
+st.markdown("<hr style='border-color: rgba(255,255,255,0.1);'>", unsafe_allow_html=True)
 
 # PASO 1: FONDEO
 st.markdown("<div class='step-box'><h3 style='margin:0;'>1️⃣ Fondeo de Capital (BDV)</h3></div>", unsafe_allow_html=True)
@@ -134,12 +177,9 @@ st.markdown("<div class='step-box'><h3 style='margin:0;'>2️⃣ Recarga por Tar
 dejar_dolar = st.checkbox("Dejar $1 de holgura por seguridad", value=True)
 usd_base = max(0.0, (usd_en_banco - 1.0) if dejar_dolar else usd_en_banco)
 
-# Sugerencia matemática
 sugerido_tarjeta = usd_base * (1 - c_tarjeta)
 
 st.markdown(f"<div class='highlight-action'>⚠️ MONTO EXACTO A TECLEAR EN LA APP:<br><span style='font-size: 28px;'>$ {sugerido_tarjeta:,.2f}</span></div>", unsafe_allow_html=True)
-
-# CONFIRMACIÓN MANUAL
 confirmado_tarjeta = st.number_input("👉 Confirma el monto que escribiste (Sin redondear céntimos si no quieres):", value=float(f"{sugerido_tarjeta:.2f}"), step=1.0)
 
 
@@ -219,7 +259,7 @@ with res1:
         <p style="font-weight: 800 !important; color: #94a3b8 !important; font-size: 14px !important; text-transform: uppercase; margin: 0;">GANANCIA NETA REAL</p>
         <div style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 5px;">
             <span style="font-weight: 900 !important; color: #38bdf8 !important; font-size: 26px !important; line-height: 1;">Bs. {gan_bs:,.2f}</span>
-            <span style="color: #16a34a !important; font-weight: 800 !important; font-size: 16px !important; line-height: 1;">≈ ₮ {gan_usdt:,.2f}</span>
+            <span style="color: #10b981 !important; font-weight: 800 !important; font-size: 16px !important; line-height: 1;">≈ ₮ {gan_usdt:,.2f}</span>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -244,7 +284,7 @@ ticket_html = f"""
 st.write(ticket_html, unsafe_allow_html=True)
 
 # ---------------------------------------------------------
-# GUARDADO Y VISUALIZACIÓN DE HISTORIAL
+# GUARDADO Y VISUALIZACIÓN DE HISTORIAL CON MEMORIA PROTEGIDA
 # ---------------------------------------------------------
 st.markdown("<br>", unsafe_allow_html=True)
 if st.button("💾 GUARDAR VUELTA EXACTA", use_container_width=True):
@@ -264,33 +304,36 @@ if st.button("💾 GUARDAR VUELTA EXACTA", use_container_width=True):
             "Ganancia_Bs": gan_bs, 
             "ROI": roi
         }
-        pd.DataFrame([nuevo_registro]).to_csv(
-            archivo_historial, 
-            mode='a', 
-            header=not os.path.exists(archivo_historial), 
-            index=False
-        )
+        # Guardar en memoria Session State y en CSV al mismo tiempo
+        df_nuevo = pd.DataFrame([nuevo_registro])
+        st.session_state.historial_df = pd.concat([st.session_state.historial_df, df_nuevo], ignore_index=True)
+        st.session_state.historial_df.to_csv(archivo_historial, index=False)
+        
         st.success(f"¡Vuelta registrada en {cuenta_activa} con éxito! Actualiza la página.")
         st.balloons()
 
 st.markdown("---")
 st.markdown("### 📂 REGISTRO DE MOVIMIENTOS")
 with st.expander("Haz clic aquí para ver o eliminar tus movimientos registrados"):
-    if not df_h.empty:
-        df_mostrar = df_h[['Día', 'Cuenta', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Ganancia_Bs', 'ROI']].tail(10).sort_index(ascending=False)
+    if not st.session_state.historial_df.empty:
+        df_mostrar = st.session_state.historial_df[['Día', 'Cuenta', 'USD_Comprados', 'USDT_Vendidos', 'Tasa_Venta', 'Ganancia_Bs', 'ROI']].tail(10).sort_index(ascending=False)
         st.dataframe(df_mostrar, use_container_width=True)
         
         st.markdown("#### ⚙️ Gestión de Datos")
         col_del1, col_del2 = st.columns(2)
         with col_del1:
             if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
-                df_nuevo = df_h.iloc[:-1]
-                df_nuevo.to_csv(archivo_historial, index=False)
+                # Elimina de la memoria y rescribe el CSV
+                st.session_state.historial_df = st.session_state.historial_df.iloc[:-1]
+                st.session_state.historial_df.to_csv(archivo_historial, index=False)
                 st.success("Última vuelta eliminada. ¡Actualiza la página para ver los cambios!")
         with col_del2:
             if st.button("🚨 Borrar TODO el Historial", use_container_width=True):
+                # Limpia la memoria y borra el archivo
+                st.session_state.historial_df = pd.DataFrame(columns=columnas_historial)
                 if os.path.exists(archivo_historial):
                     os.remove(archivo_historial)
                 st.success("Historial reseteado por completo. ¡Actualiza la página!")
     else:
         st.info("Aún no hay operaciones registradas.")
+        
