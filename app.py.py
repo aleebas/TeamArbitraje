@@ -2,10 +2,90 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import os
+import time # Import necesario para el timing del efecto
 
 st.set_page_config(page_title="Team Arbitraje", layout="wide", initial_sidebar_state="collapsed")
 
-st.markdown("""<style>.block-container{padding-top:3.5rem!important;padding-bottom:1rem!important}.main{background-color:#0f172a;color:#e2e8f0;font-family:sans-serif}h1,h2,h3,h4,p,label,.stMarkdown{color:#f8fafc!important;font-weight:700!important}h1{font-size:1.5rem!important;margin-bottom:0!important;padding-bottom:0!important}h3{font-size:1.1rem!important;margin-top:.5rem!important;margin-bottom:.1rem!important}hr{margin-top:.5rem!important;margin-bottom:.8rem!important;border-color:rgba(255,255,255,.05)!important}.stNumberInput div div input{color:#38bdf8!important;background-color:rgba(15,23,42,.8)!important;border:2px solid #334155!important;border-radius:8px;font-weight:900!important;font-size:15px!important;text-align:center;padding:4px!important;height:34px!important}.stNumberInput div div input:focus{border-color:#38bdf8!important;box-shadow:0 0 8px rgba(56,189,248,.2)!important}.dashboard-panel,.radar-box{background:linear-gradient(135deg,rgba(30,41,59,.8),rgba(15,23,42,.9));backdrop-filter:blur(12px);padding:12px 15px!important;border-radius:12px;border:1px solid rgba(255,255,255,.05);margin-bottom:10px!important;box-shadow:0 4px 15px rgba(0,0,0,.4)}div[data-testid="stMetric"]{background:linear-gradient(145deg,#1e293b,#0f172a)!important;padding:6px 10px!important;border-radius:10px;border:1px solid rgba(56,189,248,.2)!important;box-shadow:0 2px 10px rgba(0,0,0,.2)}div[data-testid="stMetricValue"]{font-size:1.2rem!important;font-weight:900!important;color:#38bdf8!important;text-shadow:0 0 5px rgba(56,189,248,.3)}div[data-testid="stMetricLabel"] p{font-weight:800!important;color:#94a3b8!important;font-size:11px!important;margin-bottom:0!important}.highlight-action{background:linear-gradient(135deg,#fef08a,#facc15);padding:6px;border-radius:8px;color:#000;text-align:center;font-size:15px;font-weight:900;margin-bottom:5px;border:1px dashed #854d0e}.summary-box{background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.98));border-radius:16px;padding:18px;border:1px solid rgba(56,189,248,.4);box-shadow:0 8px 25px rgba(0,0,0,.5);margin-top:20px;margin-bottom:15px}.summary-header{text-align:center;color:#facc15;font-size:16px;font-weight:900;border-bottom:1px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:15px}.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.summary-item{background:rgba(0,0,0,.25);padding:12px;border-radius:10px;text-align:center;border:1px solid rgba(255,255,255,.05)}.summary-item-full{grid-column:span 2;background:linear-gradient(to right,rgba(16,185,129,.1),rgba(15,23,42,.5));border:1px solid rgba(16,185,129,.4);padding:15px;border-radius:12px;text-align:center}.sum-label{font-size:11px;color:#94a3b8;font-weight:800;margin-bottom:4px;display:block}.sum-val{font-size:15px;color:#e2e8f0;font-weight:900}.sum-val.highlight{color:#38bdf8;font-size:17px}.sum-val.success{color:#10b981;font-size:22px;text-shadow:0 0 10px rgba(16,185,129,.3)}</style>""", unsafe_allow_html=True)
+# --- CSS Y JAVASCRIPT PARA EL EFECTO DE PARTÍCULAS (CANVAS) ---
+st.markdown("""<style>.block-container{padding-top:3.5rem!important;padding-bottom:1rem!important}.main{background-color:#0f172a;color:#e2e8f0;font-family:sans-serif}h1,h2,h3,h4,p,label,.stMarkdown{color:#f8fafc!important;font-weight:700!important}h1{font-size:1.5rem!important;margin-bottom:0!important;padding-bottom:0!important}h3{font-size:1.1rem!important;margin-top:.5rem!important;margin-bottom:.1rem!important}hr{margin-top:.5rem!important;margin-bottom:.8rem!important;border-color:rgba(255,255,255,.05)!important}.stNumberInput div div input{color:#38bdf8!important;background-color:rgba(15,23,42,.8)!important;border:2px solid #334155!important;border-radius:8px;font-weight:900!important;font-size:15px!important;text-align:center;padding:4px!important;height:34px!important}.stNumberInput div div input:focus{border-color:#38bdf8!important;box-shadow:0 0 8px rgba(56,189,248,.2)!important}.dashboard-panel,.radar-box{background:linear-gradient(135deg,rgba(30,41,59,.8),rgba(15,23,42,.9));backdrop-filter:blur(12px);padding:12px 15px!important;border-radius:12px;border:1px solid rgba(255,255,255,.05);margin-bottom:10px!important;box-shadow:0 4px 15px rgba(0,0,0,.4)}div[data-testid="stMetric"]{background:linear-gradient(145deg,#1e293b,#0f172a)!important;padding:6px 10px!important;border-radius:10px;border:1px solid rgba(56,189,248,.2)!important;box-shadow:0 2px 10px rgba(0,0,0,.2)}div[data-testid="stMetricValue"]{font-size:1.2rem!important;font-weight:900!important;color:#38bdf8!important;text-shadow:0 0 5px rgba(56,189,248,.3)}div[data-testid="stMetricLabel"] p{font-weight:800!important;color:#94a3b8!important;font-size:11px!important;margin-bottom:0!important}.highlight-action{background:linear-gradient(135deg,#fef08a,#facc15);padding:6px;border-radius:8px;color:#000;text-align:center;font-size:15px;font-weight:900;margin-bottom:5px;border:1px dashed #854d0e}.summary-box{background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.98));border-radius:16px;padding:18px;border:1px solid rgba(56,189,248,.4);box-shadow:0 8px 25px rgba(0,0,0,.5);margin-top:20px;margin-bottom:15px}.summary-header{text-align:center;color:#facc15;font-size:16px;font-weight:900;border-bottom:1px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:15px}.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.summary-item{background:rgba(0,0,0,.25);padding:12px;border-radius:10px;text-align:center;border:1px solid rgba(255,255,255,.05)}.summary-item-full{grid-column:span 2;background:linear-gradient(to right,rgba(16,185,129,.1),rgba(15,23,42,.5));border:1px solid rgba(16,185,129,.4);padding:15px;border-radius:12px;text-align:center}.sum-label{font-size:11px;color:#94a3b8;font-weight:800;margin-bottom:4px;display:block}.sum-val{font-size:15px;color:#e2e8f0;font-weight:900}.sum-val.highlight{color:#38bdf8;font-size:17px}.sum-val.success{color:#10b981;font-size:22px;text-shadow:0 0 10px rgba(16,185,129,.3)}
+</style>
+""", unsafe_allow_html=True)
+
+# Placeholder para inyectar el efecto JavaScript
+effect_placeholder = st.empty()
+
+# Función JavaScript para el efecto de Canvas (Partículas de Éxito)
+js_particle_effect = """
+<div id="arb-effect-container" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:999999;">
+    <canvas id="arb-canvas"></canvas>
+</div>
+<script>
+(function() {
+    const canvas = document.getElementById('arb-canvas');
+    const ctx = canvas.getContext('2d');
+    const container = document.getElementById('arb-effect-container');
+    
+    let width = canvas.width = window.innerWidth;
+    let height = canvas.height = window.innerHeight;
+    
+    const particles = [];
+    # Usamos colores dorados y cianes de nuestro tema
+    const colors = ['#facc15', '#38bdf8', '#10b981', '#ffffff']; 
+
+    class Particle {
+        constructor() {
+            this.x = width / 2;
+            this.y = height / 2; // Empieza en el centro
+            this.vx = (Math.random() - 0.5) * 15; // Velocidad explosiva
+            this.vy = (Math.random() - 0.5) * 15;
+            this.gravity = 0.15;
+            this.radius = Math.random() * 4 + 2;
+            this.color = colors[Math.floor(Math.random() * colors.length)];
+            this.alpha = 1;
+            this.decay = Math.random() * 0.015 + 0.005;
+        }
+        update() {
+            this.vx *= 0.99; // Fricción aire
+            this.vy += this.gravity;
+            this.x += this.vx;
+            this.y += this.vy;
+            this.alpha -= this.decay;
+        }
+        draw() {
+            ctx.globalAlpha = this.alpha;
+            ctx.fillStyle = this.color;
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+            ctx.fill();
+        }
+    }
+
+    for (let i = 0; i < 70; i++) { // Cantidad de partículas
+        particles.push(new Particle());
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        ctx.clearRect(0, 0, width, height); // Limpiar canvas transparente
+        
+        particles.forEach((p, index) => {
+            if (p.alpha > 0) {
+                p.update();
+                p.draw();
+            } else {
+                particles.splice(index, 1);
+            }
+        });
+        
+        // Auto-destruir el contenedor si no hay partículas
+        if (particles.length === 0) {
+            container.remove();
+        }
+    }
+    animate();
+})();
+</script>
+"""
 
 st.markdown("<h1 style='text-align:center;color:#38bdf8!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
 
@@ -25,6 +105,17 @@ if 'historial_df' not in st.session_state:
 df_h = st.session_state.historial_df
 cuentas_lista = [f"Cuenta {i}" for i in range(1, 7)]
 cuenta_activa = st.session_state.get('cuenta_activa', cuentas_lista[0])
+
+# Inicializar flag de animación si no existe
+if 'ejecutar_animacion' not in st.session_state:
+    st.session_state.ejecutar_animacion = False
+
+# --- Lógica de inyección del efecto ---
+if st.session_state.ejecutar_animacion:
+    effect_placeholder.markdown(js_particle_effect, unsafe_allow_html=True)
+    st.session_state.ejecutar_animacion = False # Resetear flag inmediatamente
+    # No hacemos rerun aquí para dejar que la animación corra en JS 
+    # mientras el resto de la página carga.
 
 df_hoy = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Día']==hoy_str)]
 df_mes = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Mes']==mes_str)]
@@ -142,10 +233,19 @@ st.markdown(f"<div class='summary-box'><div class='summary-header'>🏆 RESUMEN 
 if st.button("💾 GUARDAR VUELTA", use_container_width=True):
     if usd_banco>c_dia or usd_banco>c_mes: st.error(f"❌ Supera límites de {cuenta_activa}.")
     else:
+        # 1. Preparar datos
         nr = pd.DataFrame([{"Fecha":datetime.now().strftime("%Y-%m-%d %H:%M"),"Día":hoy_str,"Mes":mes_str,"Cuenta":cuenta_activa,"Cap_Invertido_Bs":h_cap,"USD_Comprados":h_usd,"USDT_Vendidos":h_usdt,"Tasa_Venta":tasa_v,"Bs_Recibidos":h_bs,"Ganancia_Bs":g_bs,"ROI":roi}])
+        
+        # 2. Guardar persistentemente
         st.session_state.historial_df = pd.concat([st.session_state.historial_df, nr], ignore_index=True)
         st.session_state.historial_df.to_csv(archivo_historial, index=False)
+        
+        # 3. ACTIVAR FLAG DE ANIMACIÓN
+        st.session_state.ejecutar_animacion = True
+        
+        # 4. Feedback y Rerun (El rerun activará la inyección del JS)
         st.success(f"¡Vuelta registrada en {cuenta_activa}!")
+        time.sleep(0.5) # Pequeña pausa para que lean el éxito antes del refresh
         st.rerun()
 
 with st.expander("📂 VER HISTORIAL"):
@@ -162,4 +262,4 @@ with st.expander("📂 VER HISTORIAL"):
                 st.session_state.historial_df = pd.DataFrame(columns=cols_h)
                 if os.path.exists(archivo_historial): os.remove(archivo_historial)
                 st.rerun()
-                
+    
