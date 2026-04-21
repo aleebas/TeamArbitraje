@@ -15,7 +15,6 @@ st.markdown("<h1 style='text-align:center;color:#38bdf8!important;'>🚀 RUTA DI
 hoy = datetime.now()
 hoy_str = hoy.strftime("%Y-%m-%d")
 
-# Calcular Ciclo Mensual (Corte los días 6)
 if hoy.day >= 6:
     inicio_ciclo = datetime(hoy.year, hoy.month, 6)
 else:
@@ -40,11 +39,16 @@ if 'historial_df' not in st.session_state:
 
 df_h = st.session_state.historial_df
 cuentas_lista = [f"Cuenta {i}" for i in range(1, 7)]
-cuenta_activa = st.session_state.get('cuenta_activa', cuentas_lista[0])
 
-# Cálculos de Cupos Reales
+# --- CORRECCIÓN DEL BUG DE DOBLE CLIC ---
+# Pedimos la cuenta *antes* de calcular nada
+cuenta_activa_previa = st.session_state.get('cuenta_activa', cuentas_lista[0])
+st.markdown("<p style='font-size:13px; color:#94a3b8; margin:0 0 5px 5px; font-weight:800;'>💳 SELECCIONAR CUENTA:</p>", unsafe_allow_html=True)
+cuenta_activa = st.selectbox("Cuenta", cuentas_lista, index=cuentas_lista.index(cuenta_activa_previa), label_visibility="collapsed")
+st.session_state.cuenta_activa = cuenta_activa
+
+# Cálculos de Cupos Reales basados en la cuenta seleccionada INMEDIATAMENTE
 df_hoy = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Día']==hoy_str)]
-# El cupo mensual filtra desde el día 6 del mes correspondiente hasta hoy
 df_mes = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Fecha'] >= inicio_ciclo_str)]
 
 consumo_dia = df_hoy['USD_Comprados'].sum() if not df_hoy.empty else 0
@@ -80,8 +84,6 @@ st.markdown(f"""
     </p>
 </div>
 """, unsafe_allow_html=True)
-
-st.session_state.cuenta_activa = st.selectbox("💳 Seleccionar Cuenta:", cuentas_lista, index=cuentas_lista.index(cuenta_activa), label_visibility="collapsed")
 
 c1, c2 = st.columns(2)
 with c1: tasa_c = st.number_input("📉 Tasa Compra BDV", value=570.75, step=0.01)
@@ -155,7 +157,6 @@ else:
     h_cap, h_usd, h_usdt, h_bs = bs_inv, usd_banco_inv, usdt_ini, conf_bs_inv
     usd_banco = usd_banco_inv
 
-# Radar basado en los nuevos 0.30
 c_bs_teo = h_cap
 u_base_teo = max(0.0, (usd_banco-0.30) if dej_usd else usd_banco)
 u_fin_teo = u_base_teo * 0.975 * 0.967
@@ -187,29 +188,25 @@ else:
 st.markdown(f"<div class='summary-box'><div class='summary-header'>🏆 RESUMEN GLOBAL DEL DÍA</div><div class='summary-grid'><div class='summary-item'><span class='sum-label'>🔄 Vueltas</span><span class='sum-val'>{v_tot} <span style='font-size:11px;'>({n_c})</span></span></div><div class='summary-item'><span class='sum-label'>💸 Volumen Movido</span><span class='sum-val highlight'>${v_usd:,.2f}</span></div><div class='summary-item'><span class='sum-label'>📈 Tasa Promedio</span><span class='sum-val'>Bs.{p_t:,.2f}</span></div><div class='summary-item'><span class='sum-label'>🚀 ROI Promedio</span><span class='sum-val' style='color:{'#10b981' if p_roi>=2 else '#ef4444'};'>{p_roi:,.2f}%</span></div><div class='summary-item-full'><span class='sum-label' style='color:#38bdf8;'>💰 GANANCIA TOTAL HOY</span><div style='display:flex;justify-content:center;gap:10px;'><span class='sum-val success'>Bs.{g_tot_bs:,.2f}</span><span style='color:#e2e8f0;font-weight:900;'>≈₮{g_tot_u:,.2f}</span></div></div></div></div>", unsafe_allow_html=True)
 
 if st.button("💾 GUARDAR VUELTA", use_container_width=True):
-    # Verificación estricta de cupos antes de guardar
     if (consumo_dia + h_usd) > 7000: 
         st.error(f"❌ ¡ATENCIÓN! Esta operación excede tu límite diario de $7,000 para la {cuenta_activa}.")
     elif (consumo_mes + h_usd) > 10000:
         st.error(f"❌ ¡ATENCIÓN! Esta operación excede tu límite del ciclo mensual de $10,000 para la {cuenta_activa}.")
     else:
-        # 1. Guardar en Dataframe Maestro
         nr = pd.DataFrame([{"Fecha":datetime.now().strftime("%Y-%m-%d %H:%M"),"Día":hoy_str,"Mes_Ciclo":inicio_ciclo_str,"Cuenta":cuenta_activa,"Cap_Invertido_Bs":h_cap,"USD_Comprados":h_usd,"USDT_Vendidos":h_usdt,"Tasa_Venta":tasa_v,"Bs_Recibidos":h_bs,"Ganancia_Bs":g_bs,"ROI":roi}])
         st.session_state.historial_df = pd.concat([st.session_state.historial_df, nr], ignore_index=True)
         st.session_state.historial_df.to_csv(archivo_historial, index=False)
         
-        # 2. Guardar Backup Diario
         archivo_diario = os.path.join(carpeta_backups, f"historial_{hoy_str}.csv")
         df_diario = st.session_state.historial_df[st.session_state.historial_df['Día'] == hoy_str]
         df_diario.to_csv(archivo_diario, index=False)
         
-        # 3. Efectos
-        st.toast(f"¡Vuelta registrada en {cuenta_activa}! 💸 Backup diario actualizado.", icon="✅")
+        st.toast(f"¡Vuelta registrada en {cuenta_activa}! 💸", icon="✅")
         st.balloons() 
         time.sleep(2) 
         st.rerun()
 
-# --- NUEVO CENTRO DE RÉCORDS ---
+# --- CENTRO DE RÉCORDS Y AUDITORÍA (SIN BARRAS, SOLO NÚMEROS) ---
 with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
     st.markdown("<p style='font-size:13px;color:#94a3b8;'>Consulta tus movimientos históricos guardados.</p>", unsafe_allow_html=True)
     if not st.session_state.historial_df.empty:
@@ -224,32 +221,37 @@ with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
         if filtro_fecha != "Todas": df_view = df_view[df_view['Día'] == filtro_fecha]
         if filtro_cuenta != "Todas": df_view = df_view[df_view['Cuenta'] == filtro_cuenta]
         
-        # Mostrar Tabla
         st.dataframe(df_view[['Fecha','Cuenta','USD_Comprados','Ganancia_Bs','ROI']].sort_index(ascending=False), use_container_width=True)
         
-        # --- NUEVOS GRÁFICOS DE BARRAS DINÁMICOS ---
-        st.markdown("<h4 style='text-align:center;color:#38bdf8;margin-top:20px;font-size:14px;'>📊 Análisis de Rendimiento</h4>", unsafe_allow_html=True)
-        
-        # Agrupar los datos por Día para graficar
-        df_chart = df_view.groupby('Día')[['USD_Comprados', 'Ganancia_Bs']].sum().reset_index()
-        df_chart.set_index('Día', inplace=True)
-        
-        cg1, cg2 = st.columns(2)
-        with cg1:
-            st.markdown("<p style='font-size:11px;color:#94a3b8;text-align:center;margin-bottom:2px;'>Volumen Movido (USD)</p>", unsafe_allow_html=True)
-            st.bar_chart(df_chart['USD_Comprados'], color="#38bdf8", use_container_width=True)
-        with cg2:
-            st.markdown("<p style='font-size:11px;color:#94a3b8;text-align:center;margin-bottom:2px;'>Ganancia Neta (Bs)</p>", unsafe_allow_html=True)
-            st.bar_chart(df_chart['Ganancia_Bs'], color="#10b981", use_container_width=True)
+        # --- PANEL NUMÉRICO ATRACTIVO (REEMPLAZA A LAS BARRAS PESADAS) ---
+        if not df_view.empty:
+            t_usd_view = df_view['USD_Comprados'].sum()
+            t_gan_view = df_view['Ganancia_Bs'].sum()
+            p_roi_view = df_view['ROI'].mean()
             
-        # Botones de Acción
+            st.markdown(f"""
+            <div style='display:flex; justify-content:space-around; background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.98)); padding:15px; border-radius:12px; border:1px dashed #38bdf8; margin-top:15px; margin-bottom:15px;'>
+                <div style='text-align:center;'>
+                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>VOLUMEN (USD)</span>
+                    <span style='font-size:18px;color:#38bdf8;font-weight:900;'>${t_usd_view:,.2f}</span>
+                </div>
+                <div style='text-align:center; border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1); padding:0 15px;'>
+                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>GANANCIA NETA</span>
+                    <span style='font-size:18px;color:#10b981;font-weight:900;'>Bs.{t_gan_view:,.2f}</span>
+                </div>
+                <div style='text-align:center;'>
+                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>ROI PROMEDIO</span>
+                    <span style='font-size:18px;color:#facc15;font-weight:900;'>{p_roi_view:,.2f}%</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+        
         st.markdown("<hr style='border-color:rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
         cd1, cd2 = st.columns(2)
         with cd1:
             if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
                 st.session_state.historial_df = st.session_state.historial_df.iloc[:-1]
                 st.session_state.historial_df.to_csv(archivo_historial, index=False)
-                # Actualizar también el backup diario
                 archivo_diario = os.path.join(carpeta_backups, f"historial_{hoy_str}.csv")
                 df_diario = st.session_state.historial_df[st.session_state.historial_df['Día'] == hoy_str]
                 if not df_diario.empty: 
@@ -259,7 +261,4 @@ with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
             if st.button("🚨 Reiniciar Base de Datos", use_container_width=True):
                 st.session_state.historial_df = pd.DataFrame(columns=cols_h)
                 if os.path.exists(archivo_historial): os.remove(archivo_historial)
-                st.rerun()
-    else:
-        st.info("No hay registros en el historial todavía para graficar.")
-        
+                st.rerun
