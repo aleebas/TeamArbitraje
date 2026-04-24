@@ -1,15 +1,52 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, date
+from datetime import datetime
 import os
 import time
 
 st.set_page_config(page_title="Team Arbitraje", layout="wide", initial_sidebar_state="collapsed")
 
-# --- CSS MEJORADO (BARRAS DE PROGRESO Y PANELES) ---
-st.markdown("""<style>.block-container{padding-top:3.5rem!important;padding-bottom:1rem!important}.main{background-color:#0f172a;color:#e2e8f0;font-family:sans-serif}h1,h2,h3,h4,p,label,.stMarkdown{color:#f8fafc!important;font-weight:700!important}h1{font-size:1.5rem!important;margin-bottom:0!important;padding-bottom:0!important}h3{font-size:1.1rem!important;margin-top:.5rem!important;margin-bottom:.1rem!important}hr{margin-top:.5rem!important;margin-bottom:.8rem!important;border-color:rgba(255,255,255,.05)!important}.stNumberInput div div input{color:#38bdf8!important;background-color:rgba(15,23,42,.8)!important;border:2px solid #334155!important;border-radius:8px;font-weight:900!important;font-size:15px!important;text-align:center;padding:4px!important;height:34px!important}.stNumberInput div div input:focus{border-color:#38bdf8!important;box-shadow:0 0 8px rgba(56,189,248,.2)!important}.dashboard-panel,.radar-box{background:linear-gradient(135deg,rgba(30,41,59,.8),rgba(15,23,42,.9));backdrop-filter:blur(12px);padding:15px!important;border-radius:12px;border:1px solid rgba(255,255,255,.1);margin-bottom:10px!important;box-shadow:0 4px 15px rgba(0,0,0,.4)}div[data-testid="stMetric"]{background:linear-gradient(145deg,#1e293b,#0f172a)!important;padding:6px 10px!important;border-radius:10px;border:1px solid rgba(56,189,248,.2)!important;box-shadow:0 2px 10px rgba(0,0,0,.2)}div[data-testid="stMetricValue"]{font-size:1.2rem!important;font-weight:900!important;color:#38bdf8!important;text-shadow:0 0 5px rgba(56,189,248,.3)}div[data-testid="stMetricLabel"] p{font-weight:800!important;color:#94a3b8!important;font-size:11px!important;margin-bottom:0!important}.highlight-action{background:linear-gradient(135deg,#fef08a,#facc15);padding:6px;border-radius:8px;color:#000;text-align:center;font-size:15px;font-weight:900;margin-bottom:5px;border:1px dashed #854d0e}.highlight-celeste{background:linear-gradient(135deg,#bae6fd,#38bdf8);padding:6px;border-radius:8px;color:#0f172a;text-align:center;font-size:15px;font-weight:900;margin-bottom:5px;border:1px dashed #0284c7}.summary-box{background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.98));border-radius:16px;padding:18px;border:1px solid rgba(56,189,248,.4);box-shadow:0 8px 25px rgba(0,0,0,.5);margin-top:20px;margin-bottom:15px}.summary-header{text-align:center;color:#facc15;font-size:16px;font-weight:900;border-bottom:1px dashed rgba(255,255,255,.2);padding-bottom:10px;margin-bottom:15px}.summary-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.summary-item{background:rgba(0,0,0,.25);padding:12px;border-radius:10px;text-align:center;border:1px solid rgba(255,255,255,.05)}.summary-item-full{grid-column:span 2;background:linear-gradient(to right,rgba(16,185,129,.1),rgba(15,23,42,.5));border:1px solid rgba(16,185,129,.4);padding:15px;border-radius:12px;text-align:center}.sum-label{font-size:11px;color:#94a3b8;font-weight:800;margin-bottom:4px;display:block}.sum-val{font-size:15px;color:#e2e8f0;font-weight:900}.sum-val.highlight{color:#38bdf8;font-size:17px}.sum-val.success{color:#10b981;font-size:22px;text-shadow:0 0 10px rgba(16,185,129,.3)}.progress-bg{background-color:#334155;border-radius:10px;width:100%;height:10px;margin-top:4px;overflow:hidden}.progress-fill-day{background-color:#38bdf8;height:100%}.progress-fill-month{background-color:#c084fc;height:100%}</style>""", unsafe_allow_html=True)
+# --- CSS ADAPTATIVO (MODO BLANCO Y OSCURO) ---
+st.markdown("""<style>
+.block-container{padding-top:3.5rem!important;padding-bottom:1rem!important}
+h1,h2,h3,h4,p,label,.stMarkdown{font-weight:700!important}
+.dashboard-panel, .summary-box {
+    background-color: var(--secondary-background-color);
+    padding: 15px!important;
+    border-radius: 12px;
+    border: 1px solid rgba(128,128,128,0.2);
+    margin-bottom: 10px!important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+div[data-testid="stMetric"] {
+    background-color: var(--secondary-background-color);
+    padding: 6px 10px!important;
+    border-radius: 10px;
+    border: 1px solid rgba(128,128,128,0.2)!important;
+}
+.stNumberInput div div input {
+    background-color: var(--background-color)!important;
+    color: var(--text-color)!important;
+    border: 2px solid rgba(128,128,128,0.3)!important;
+    border-radius: 8px;
+    font-weight: 900!important;
+    font-size: 15px!important;
+    text-align: center;
+    padding: 4px!important;
+    height: 34px!important;
+}
+.stNumberInput div div input:focus { border-color: #0ea5e9!important; }
+.highlight-action { background-color: #fef08a; padding:6px; border-radius:8px; color:#854d0e; text-align:center; font-size:15px; font-weight:900; margin-bottom:5px; border:1px dashed #ca8a04; }
+.highlight-celeste { background-color: #e0f2fe; padding:6px; border-radius:8px; color:#0369a1; text-align:center; font-size:15px; font-weight:900; margin-bottom:5px; border:1px dashed #0284c7; }
+.progress-bg { background-color: rgba(128,128,128,0.2); border-radius: 10px; width: 100%; height: 10px; margin-top: 4px; overflow: hidden; }
+.progress-fill-day { background-color: #0ea5e9; height: 100%; }
+.progress-fill-month { background-color: #a855f7; height: 100%; }
+.summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.summary-item { background: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(128,128,128,0.1); }
+.summary-item-full { grid-column: span 2; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4); padding: 15px; border-radius: 12px; text-align: center; }
+</style>""", unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align:center;color:#38bdf8!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
 
 # Lógica de Fechas y Ciclos
 hoy = datetime.now()
@@ -28,28 +65,35 @@ if not os.path.exists(carpeta_backups): os.makedirs(carpeta_backups)
 
 cols_h = ['Fecha','Día','Mes_Ciclo','Cuenta','Cap_Invertido_Bs','USD_Comprados','USDT_Vendidos','Tasa_Venta','Bs_Recibidos','Ganancia_Bs','ROI']
 
+# --- LECTURA BLINDADA DEL CSV PARA PERSISTENCIA EXACTA ---
 if 'historial_df' not in st.session_state:
     if os.path.exists(archivo_historial):
-        df_t = pd.read_csv(archivo_historial)
-        for c in cols_h:
-            if c not in df_t.columns: df_t[c] = 0.0
-        st.session_state.historial_df = df_t
+        try:
+            df_t = pd.read_csv(archivo_historial, dtype=str)
+            cols_num = ['Cap_Invertido_Bs','USD_Comprados','USDT_Vendidos','Tasa_Venta','Bs_Recibidos','Ganancia_Bs','ROI']
+            for c in cols_h:
+                if c not in df_t.columns: 
+                    df_t[c] = '0.0' if c in cols_num else ''
+            for c in cols_num:
+                df_t[c] = pd.to_numeric(df_t[c], errors='coerce').fillna(0.0)
+            st.session_state.historial_df = df_t
+        except Exception:
+            st.session_state.historial_df = pd.DataFrame(columns=cols_h)
     else:
         st.session_state.historial_df = pd.DataFrame(columns=cols_h)
 
 df_h = st.session_state.historial_df
 cuentas_lista = [f"Cuenta {i}" for i in range(1, 7)]
 
-# --- CORRECCIÓN DEL BUG DE DOBLE CLIC ---
-# Pedimos la cuenta *antes* de calcular nada
 cuenta_activa_previa = st.session_state.get('cuenta_activa', cuentas_lista[0])
-st.markdown("<p style='font-size:13px; color:#94a3b8; margin:0 0 5px 5px; font-weight:800;'>💳 SELECCIONAR CUENTA:</p>", unsafe_allow_html=True)
+st.markdown("<p style='font-size:13px; color:#6b7280; margin:0 0 5px 5px; font-weight:800;'>💳 SELECCIONAR CUENTA:</p>", unsafe_allow_html=True)
 cuenta_activa = st.selectbox("Cuenta", cuentas_lista, index=cuentas_lista.index(cuenta_activa_previa), label_visibility="collapsed")
 st.session_state.cuenta_activa = cuenta_activa
 
-# Cálculos de Cupos Reales basados en la cuenta seleccionada INMEDIATAMENTE
-df_hoy = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Día']==hoy_str)]
-df_mes = df_h[(df_h['Cuenta']==cuenta_activa)&(df_h['Fecha'] >= inicio_ciclo_str)]
+# --- FILTROS DE CUPOS EXACTOS POR ETIQUETA ---
+df_hoy = df_h[(df_h['Cuenta']==cuenta_activa) & (df_h['Día']==hoy_str)]
+# Filtro estricto del mes basado en la etiqueta del ciclo, asegura el acumulado correcto sin importar los días.
+df_mes = df_h[(df_h['Cuenta']==cuenta_activa) & (df_h['Mes_Ciclo']==inicio_ciclo_str)]
 
 consumo_dia = df_hoy['USD_Comprados'].sum() if not df_hoy.empty else 0
 consumo_mes = df_mes['USD_Comprados'].sum() if not df_mes.empty else 0
@@ -63,24 +107,24 @@ vueltas = len(df_hoy)
 gan_acum = df_hoy['Ganancia_Bs'].sum() if not df_hoy.empty else 0
 gan_tot = df_h[df_h['Día']==hoy_str]['Ganancia_Bs'].sum() if not df_h.empty else 0
 
-# --- PANEL DE CONTROL MEJORADO ---
+# --- PANEL DE CONTROL (Colores Neutrales/Dinámicos) ---
 st.markdown(f"""
 <div class='dashboard-panel'>
-    <p style='text-align:center;margin:0 0 10px 0;font-size:14px;color:#94a3b8;font-weight:900;'>🎛️ PANEL DE CONTROL ({cuenta_activa})</p>
+    <p style='text-align:center;margin:0 0 10px 0;font-size:14px;color:#6b7280;font-weight:900;'>🎛️ PANEL DE CONTROL ({cuenta_activa})</p>
     <div style='display:flex;justify-content:space-between;margin-bottom:10px;'>
         <div style='width:48%;'>
-            <p style='margin:0;font-size:12px;color:#e2e8f0;'>Diario ($7K): <b style='color:#38bdf8;'>Disp. ${c_dia:,.0f}</b></p>
+            <p style='margin:0;font-size:12px;color:var(--text-color);'>Diario ($7K): <b style='color:#0ea5e9;'>Disp. ${c_dia:,.0f}</b></p>
             <div class='progress-bg'><div class='progress-fill-day' style='width:{pct_dia}%;'></div></div>
         </div>
         <div style='width:48%;'>
-            <p style='margin:0;font-size:12px;color:#e2e8f0;'>Ciclo ($10K): <b style='color:#c084fc;'>Disp. ${c_mes:,.0f}</b></p>
+            <p style='margin:0;font-size:12px;color:var(--text-color);'>Ciclo ($10K): <b style='color:#a855f7;'>Disp. ${c_mes:,.0f}</b></p>
             <div class='progress-bg'><div class='progress-fill-month' style='width:{pct_mes}%;'></div></div>
         </div>
     </div>
-    <p style='text-align:center;font-size:13px;margin:10px 0 0 0;'>
+    <p style='text-align:center;font-size:13px;margin:10px 0 0 0;color:var(--text-color);'>
         Vueltas: <b style='color:#10b981;'>{vueltas}</b> | 
-        Ganancia Cuenta: <span style='color:#16a34a;'>Bs.{gan_acum:,.2f}</span> | 
-        🌍 GLOBAL: <span style='color:#facc15;'>Bs.{gan_tot:,.2f}</span>
+        Ganancia Cta: <span style='color:#10b981;'>Bs.{gan_acum:,.2f}</span> | 
+        🌍 GLOBAL: <span style='color:#f59e0b;'>Bs.{gan_tot:,.2f}</span>
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -167,11 +211,11 @@ g_u_teo = g_bs_teo/tasa_v if tasa_v>0 else 0
 roi_teo = (g_bs_teo/c_bs_teo)*100 if c_bs_teo>0 else 0
 c_roi = '#ef4444' if roi_teo<2 else '#10b981'
 
-radar_placeholder.markdown(f"<div style='background:linear-gradient(135deg,rgba(16,185,129,.1),rgba(15,23,42,.6));border:1px solid rgba(16,185,129,.3);padding:12px;border-radius:12px;margin:5px 0 15px;'><p style='margin:0;font-size:11px;color:#94a3b8;'>🔍 PROYECCIÓN P2P (Basado en ${usd_banco:,.2f})</p><div style='display:flex;justify-content:space-between;margin-top:5px;'><div><p style='margin:0;font-size:13px;color:#e2e8f0;'>🎯 Sugerida(2%): <b style='color:#facc15;'>Bs.{t_sug:,.2f}</b></p><p style='margin:0;font-size:13px;'>📊 ROI Teórico: <b style='color:{c_roi};'>{roi_teo:,.2f}%</b></p></div><div style='text-align:right;'><p style='margin:0;font-size:10px;color:#94a3b8;'>GANANCIA</p><p style='margin:0;font-size:16px;font-weight:900;color:#38bdf8;'>Bs.{g_bs_teo:,.2f}</p><p style='margin:0;font-size:13px;color:#10b981;'>≈₮{g_u_teo:,.2f}</p></div></div></div>", unsafe_allow_html=True)
+radar_placeholder.markdown(f"<div style='background:linear-gradient(135deg,rgba(16,185,129,.1),var(--secondary-background-color));border:1px solid rgba(16,185,129,.3);padding:12px;border-radius:12px;margin:5px 0 15px;'><p style='margin:0;font-size:11px;color:#6b7280;'>🔍 PROYECCIÓN P2P (Basado en ${usd_banco:,.2f})</p><div style='display:flex;justify-content:space-between;margin-top:5px;'><div><p style='margin:0;font-size:13px;color:var(--text-color);'>🎯 Sugerida(2%): <b style='color:#f59e0b;'>Bs.{t_sug:,.2f}</b></p><p style='margin:0;font-size:13px;color:var(--text-color);'>📊 ROI Teórico: <b style='color:{c_roi};'>{roi_teo:,.2f}%</b></p></div><div style='text-align:right;'><p style='margin:0;font-size:10px;color:#6b7280;'>GANANCIA</p><p style='margin:0;font-size:16px;font-weight:900;color:#0ea5e9;'>Bs.{g_bs_teo:,.2f}</p><p style='margin:0;font-size:13px;color:#10b981;'>≈₮{g_u_teo:,.2f}</p></div></div></div>", unsafe_allow_html=True)
 
 st.markdown("<hr style='margin-bottom:8px;'>", unsafe_allow_html=True)
 r1, r2, r3 = st.columns(3)
-r1.markdown(f"<div data-testid='stMetric'><p style='font-size:11px;color:#94a3b8;margin:0;font-weight:800;'>GANANCIA NETA</p><div style='display:flex;gap:6px;margin-top:2px;'><span style='font-size:18px;color:#38bdf8;font-weight:900;'>Bs.{g_bs:,.2f}</span><span style='font-size:13px;color:#10b981;font-weight:800;'>₮{g_usdt:,.2f}</span></div></div>", unsafe_allow_html=True)
+r1.markdown(f"<div data-testid='stMetric'><p style='font-size:11px;color:#6b7280;margin:0;font-weight:800;'>GANANCIA NETA</p><div style='display:flex;gap:6px;margin-top:2px;'><span style='font-size:18px;color:#0ea5e9;font-weight:900;'>Bs.{g_bs:,.2f}</span><span style='font-size:13px;color:#10b981;font-weight:800;'>₮{g_usdt:,.2f}</span></div></div>", unsafe_allow_html=True)
 r2.metric("ROI REAL", f"{roi:.2f}%")
 r3.metric("BRECHA", f"{brecha:.2f}%")
 
@@ -185,7 +229,7 @@ if not df_h_g.empty:
 else:
     v_tot, c_us, n_c, p_t, p_roi, g_tot_bs, g_tot_u, v_usd = 0,0,"N/A",0,0,0,0,0
 
-st.markdown(f"<div class='summary-box'><div class='summary-header'>🏆 RESUMEN GLOBAL DEL DÍA</div><div class='summary-grid'><div class='summary-item'><span class='sum-label'>🔄 Vueltas</span><span class='sum-val'>{v_tot} <span style='font-size:11px;'>({n_c})</span></span></div><div class='summary-item'><span class='sum-label'>💸 Volumen Movido</span><span class='sum-val highlight'>${v_usd:,.2f}</span></div><div class='summary-item'><span class='sum-label'>📈 Tasa Promedio</span><span class='sum-val'>Bs.{p_t:,.2f}</span></div><div class='summary-item'><span class='sum-label'>🚀 ROI Promedio</span><span class='sum-val' style='color:{'#10b981' if p_roi>=2 else '#ef4444'};'>{p_roi:,.2f}%</span></div><div class='summary-item-full'><span class='sum-label' style='color:#38bdf8;'>💰 GANANCIA TOTAL HOY</span><div style='display:flex;justify-content:center;gap:10px;'><span class='sum-val success'>Bs.{g_tot_bs:,.2f}</span><span style='color:#e2e8f0;font-weight:900;'>≈₮{g_tot_u:,.2f}</span></div></div></div></div>", unsafe_allow_html=True)
+st.markdown(f"<div class='summary-box'><div class='summary-header'>🏆 RESUMEN GLOBAL DEL DÍA</div><div class='summary-grid'><div class='summary-item'><span style='font-size:11px;color:#6b7280;font-weight:800;display:block;'>🔄 Vueltas</span><span style='font-size:15px;color:var(--text-color);font-weight:900;'>{v_tot} <span style='font-size:11px;'>({n_c})</span></span></div><div class='summary-item'><span style='font-size:11px;color:#6b7280;font-weight:800;display:block;'>💸 Volumen Movido</span><span style='color:#0ea5e9;font-size:17px;font-weight:900;'>${v_usd:,.2f}</span></div><div class='summary-item'><span style='font-size:11px;color:#6b7280;font-weight:800;display:block;'>📈 Tasa Promedio</span><span style='font-size:15px;color:var(--text-color);font-weight:900;'>Bs.{p_t:,.2f}</span></div><div class='summary-item'><span style='font-size:11px;color:#6b7280;font-weight:800;display:block;'>🚀 ROI Promedio</span><span style='font-size:15px;font-weight:900;color:{'#10b981' if p_roi>=2 else '#ef4444'};'>{p_roi:,.2f}%</span></div><div class='summary-item-full'><span style='font-size:11px;color:#0ea5e9;font-weight:800;display:block;margin-bottom:4px;'>💰 GANANCIA TOTAL HOY</span><div style='display:flex;justify-content:center;gap:10px;'><span style='color:#10b981;font-size:22px;font-weight:900;'>Bs.{g_tot_bs:,.2f}</span><span style='color:var(--text-color);font-weight:900;font-size:15px;align-self:center;'>≈₮{g_tot_u:,.2f}</span></div></div></div></div>", unsafe_allow_html=True)
 
 if st.button("💾 GUARDAR VUELTA", use_container_width=True):
     if (consumo_dia + h_usd) > 7000: 
@@ -206,9 +250,8 @@ if st.button("💾 GUARDAR VUELTA", use_container_width=True):
         time.sleep(2) 
         st.rerun()
 
-# --- CENTRO DE RÉCORDS Y AUDITORÍA (SIN BARRAS, SOLO NÚMEROS) ---
 with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
-    st.markdown("<p style='font-size:13px;color:#94a3b8;'>Consulta tus movimientos históricos guardados.</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size:13px;color:#6b7280;'>Consulta tus movimientos históricos guardados.</p>", unsafe_allow_html=True)
     if not st.session_state.historial_df.empty:
         df_view = st.session_state.historial_df.copy()
         
@@ -223,30 +266,29 @@ with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
         
         st.dataframe(df_view[['Fecha','Cuenta','USD_Comprados','Ganancia_Bs','ROI']].sort_index(ascending=False), use_container_width=True)
         
-        # --- PANEL NUMÉRICO ATRACTIVO (REEMPLAZA A LAS BARRAS PESADAS) ---
         if not df_view.empty:
             t_usd_view = df_view['USD_Comprados'].sum()
             t_gan_view = df_view['Ganancia_Bs'].sum()
             p_roi_view = df_view['ROI'].mean()
             
             st.markdown(f"""
-            <div style='display:flex; justify-content:space-around; background:linear-gradient(135deg,rgba(15,23,42,.95),rgba(30,41,59,.98)); padding:15px; border-radius:12px; border:1px dashed #38bdf8; margin-top:15px; margin-bottom:15px;'>
+            <div style='display:flex; justify-content:space-around; background-color: var(--secondary-background-color); padding:15px; border-radius:12px; border:1px dashed #0ea5e9; margin-top:15px; margin-bottom:15px;'>
                 <div style='text-align:center;'>
-                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>VOLUMEN (USD)</span>
-                    <span style='font-size:18px;color:#38bdf8;font-weight:900;'>${t_usd_view:,.2f}</span>
+                    <span style='font-size:10px;color:#6b7280;font-weight:800;display:block;margin-bottom:2px;'>VOLUMEN (USD)</span>
+                    <span style='font-size:18px;color:#0ea5e9;font-weight:900;'>${t_usd_view:,.2f}</span>
                 </div>
-                <div style='text-align:center; border-left:1px solid rgba(255,255,255,0.1); border-right:1px solid rgba(255,255,255,0.1); padding:0 15px;'>
-                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>GANANCIA NETA</span>
+                <div style='text-align:center; border-left:1px solid rgba(128,128,128,0.2); border-right:1px solid rgba(128,128,128,0.2); padding:0 15px;'>
+                    <span style='font-size:10px;color:#6b7280;font-weight:800;display:block;margin-bottom:2px;'>GANANCIA NETA</span>
                     <span style='font-size:18px;color:#10b981;font-weight:900;'>Bs.{t_gan_view:,.2f}</span>
                 </div>
                 <div style='text-align:center;'>
-                    <span style='font-size:10px;color:#94a3b8;font-weight:800;display:block;margin-bottom:2px;'>ROI PROMEDIO</span>
-                    <span style='font-size:18px;color:#facc15;font-weight:900;'>{p_roi_view:,.2f}%</span>
+                    <span style='font-size:10px;color:#6b7280;font-weight:800;display:block;margin-bottom:2px;'>ROI PROMEDIO</span>
+                    <span style='font-size:18px;color:#f59e0b;font-weight:900;'>{p_roi_view:,.2f}%</span>
                 </div>
             </div>
             """, unsafe_allow_html=True)
         
-        st.markdown("<hr style='border-color:rgba(255,255,255,0.05);'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border-color:rgba(128,128,128,0.2);'>", unsafe_allow_html=True)
         cd1, cd2 = st.columns(2)
         with cd1:
             if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
@@ -261,4 +303,7 @@ with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
             if st.button("🚨 Reiniciar Base de Datos", use_container_width=True):
                 st.session_state.historial_df = pd.DataFrame(columns=cols_h)
                 if os.path.exists(archivo_historial): os.remove(archivo_historial)
-                st.rerun
+                st.rerun()
+    else:
+        st.info("No hay registros en el historial todavía.")
+        
