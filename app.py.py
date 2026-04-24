@@ -46,7 +46,7 @@ div[data-testid="stMetric"] {
 .summary-item-full { grid-column: span 2; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4); padding: 15px; border-radius: 12px; text-align: center; }
 </style>""", unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
 
 # Lógica de Fechas y Ciclos
 hoy = datetime.now()
