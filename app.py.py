@@ -41,7 +41,7 @@ h1,h2,h3,h4,p,label,.stMarkdown{font-weight:700!important}
 .breakdown-row { display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; padding: 4px 8px; background: rgba(128,128,128,0.05); border-radius: 6px; }
 </style>""", unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
 
 # Lógica de Fechas y Ciclos
 hoy = datetime.now()
