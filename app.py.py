@@ -10,7 +10,7 @@ st.set_page_config(page_title="Team Arbitraje", layout="wide", initial_sidebar_s
 # --- CSS APLANADO (Cero errores de sintaxis) ---
 st.markdown("<style>.block-container{padding-top:3.5rem!important;padding-bottom:1rem!important} h1,h2,h3,h4,p,label,.stMarkdown{font-weight:700!important} .dashboard-panel, .summary-box {background-color: var(--secondary-background-color); padding: 15px!important; border-radius: 12px; border: 1px solid rgba(128,128,128,0.2); margin-bottom: 10px!important; box-shadow: 0 4px 15px rgba(0,0,0,0.05);} .stNumberInput div div input {background-color: var(--background-color)!important; color: var(--text-color)!important; border: 2px solid rgba(128,128,128,0.3)!important; border-radius: 8px; font-weight: 900!important; font-size: 15px!important; text-align: center; padding: 4px!important; height: 34px!important;} .stNumberInput div div input:focus { border-color: #0ea5e9!important; } .highlight-action { background-color: #fef08a; padding:6px; border-radius:8px; color:#854d0e; text-align:center; font-size:15px; font-weight:900; margin-bottom:5px; border:1px dashed #ca8a04; } .highlight-celeste { background-color: #e0f2fe; padding:6px; border-radius:8px; color:#0369a1; text-align:center; font-size:15px; font-weight:900; margin-bottom:5px; border:1px dashed #0284c7; } .progress-bg { background-color: rgba(128,128,128,0.2); border-radius: 10px; width: 100%; height: 10px; margin-top: 4px; overflow: hidden; } .progress-fill-day { background-color: #0ea5e9; height: 100%; } .progress-fill-month { background-color: #a855f7; height: 100%; } .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; } .summary-item { background: rgba(128,128,128,0.05); padding: 12px; border-radius: 10px; text-align: center; border: 1px solid rgba(128,128,128,0.1); } .summary-item-full { grid-column: span 2; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.4); padding: 15px; border-radius: 12px; text-align: center; } .breakdown-row { display:flex; justify-content:space-between; font-size:14px; margin-bottom:6px; padding: 4px 8px; background: rgba(128,128,128,0.05); border-radius: 6px; }</style>", unsafe_allow_html=True)
 
-st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align:center;color:#0ea5e9!important;'>🚀 RUTA DIRECTA (BDV)</h1><div style='margin-bottom:15px;'></div>", unsafe_allow_html=True)
 
 # Lógica de Fechas y Ciclos
 hoy = datetime.now()
@@ -76,7 +76,7 @@ panel_html = f"<div class='dashboard-panel'><p style='text-align:center;margin:0
 st.markdown(panel_html, unsafe_allow_html=True)
 
 c1, c2 = st.columns(2)
-with c1: tasa_c = st.number_input("📉 Tasa Compra BDV", value=570.75, step=0.01)
+with c1: tasa_c = st.number_input("📉 Tasa Compra BDV", value=611.00, step=0.01)
 with c2: tasa_v = st.number_input("📈 Tasa Venta P2P", value=648.00, step=0.01)
 tasa_real_b = tasa_c * 1.005
 
@@ -89,7 +89,7 @@ if tipo_v == "➡️ Normal":
     st.markdown("<h3 style='margin:0;'>1️⃣ Fondeo BDV</h3>", unsafe_allow_html=True)
     t_ing = st.radio("Ingreso en:", ["Bs", "USD"], horizontal=True, label_visibility="collapsed")
     if t_ing == "Bs":
-        cap_bs = st.number_input("Monto (Bs.)", value=57360.00, step=100.0)
+        cap_bs = st.number_input("Monto (Bs.)", value=61100.00, step=100.0)
         usd_banco = cap_bs/tasa_real_b if tasa_real_b>0 else 0
         st.markdown(f"<div class='highlight-celeste'>💵 COMPRASTE:<br><span style='font-size:22px;'>${usd_banco:,.2f}</span></div>", unsafe_allow_html=True)
     else:
@@ -102,13 +102,20 @@ if tipo_v == "➡️ Normal":
         st.markdown(f"<p style='text-align:center; font-size:11.5px; color:#6b7280; margin-top:-3px; margin-bottom:12px;'>💡 <b>Sugerencia:</b> {vueltas_sug} vueltas aprox. para agotar el límite de tarjeta ($1,950).</p>", unsafe_allow_html=True)
 
     st.markdown("<h3 style='margin:0;'>2️⃣ Recarga Tarjeta</h3>", unsafe_allow_html=True)
+    # Selector de Tarjeta
+    tipo_tarjeta = st.radio("Tipo de Tarjeta BDV:", ["💳 Física (1.5%)", "📱 Digital (2.5%)"], horizontal=True)
+    factor_tarjeta = 0.985 if "Física" in tipo_tarjeta else 0.975
+
     dej_usd = st.checkbox("Dejar $0.30 holgura (Fallas)", value=True)
     usd_base = max(0.0, (usd_banco-0.30) if dej_usd else usd_banco)
-    sug_tarj = usd_base * 0.975
+    
+    # Aplicación matemática de la tarjeta seleccionada
+    sug_tarj = usd_base * factor_tarjeta
     st.markdown(f"<div class='highlight-action'>⚠️ TECLEAR EN APP:<br><span style='font-size:22px;'>${sug_tarj:,.2f}</span></div>", unsafe_allow_html=True)
     conf_tarj = st.number_input("👉 Confirma monto app:", value=float(f"{sug_tarj:.2f}"), step=1.0)
 
     st.markdown("<h3 style='margin:0;'>3️⃣ Recibido Binance</h3>", unsafe_allow_html=True)
+    # Comisión de Binance confirmada en 3.6% (0.964)
     sug_bin = conf_tarj * 0.964
     conf_usdt = st.number_input(f"👉 USDT acreditados reales (≈₮{sug_bin:,.2f}):", value=float(f"{sug_bin:.2f}"), step=1.0)
 
@@ -121,6 +128,7 @@ if tipo_v == "➡️ Normal":
     g_usdt = g_bs/tasa_v if tasa_v>0 else 0
     roi = (g_bs/cap_bs)*100 if cap_bs>0 else 0
     h_cap, h_usd, h_usdt, h_bs = cap_bs, usd_banco, usdt_vend, conf_bs_rec
+
 else:
     st.markdown("<h3 style='margin:0;'>1️⃣ Venta Inicial P2P</h3>", unsafe_allow_html=True)
     usdt_ini = st.number_input("USDT Iniciales:", value=100.00, step=1.0)
@@ -137,13 +145,20 @@ else:
         st.markdown(f"<p style='text-align:center; font-size:11.5px; color:#6b7280; margin-top:-3px; margin-bottom:12px;'>💡 <b>Sugerencia:</b> {vueltas_sug} vueltas aprox. para agotar el límite de tarjeta ($1,950).</p>", unsafe_allow_html=True)
 
     st.markdown("<h3 style='margin:0;'>3️⃣ Recarga Tarjeta</h3>", unsafe_allow_html=True)
+    # Selector de Tarjeta
+    tipo_tarjeta = st.radio("Tipo de Tarjeta BDV:", ["💳 Física (1.5%)", "📱 Digital (2.5%)"], horizontal=True)
+    factor_tarjeta = 0.985 if "Física" in tipo_tarjeta else 0.975
+
     dej_usd = st.checkbox("Dejar $0.30 holgura (Fallas)", value=True)
     usd_base_inv = max(0.0, (usd_banco_inv-0.30) if dej_usd else usd_banco_inv)
-    sug_tarj_inv = usd_base_inv * 0.975
+    
+    # Aplicación matemática de la tarjeta seleccionada
+    sug_tarj_inv = usd_base_inv * factor_tarjeta
     st.markdown(f"<div class='highlight-action'>⚠️ TECLEAR EN APP:<br><span style='font-size:22px;'>${sug_tarj_inv:,.2f}</span></div>", unsafe_allow_html=True)
     conf_tarj_inv = st.number_input("👉 Confirma monto app:", value=float(f"{sug_tarj_inv:.2f}"), step=1.0)
 
     st.markdown("<h3 style='margin:0;'>4️⃣ USDT Recuperados</h3>", unsafe_allow_html=True)
+    # Comisión de Binance confirmada en 3.6% (0.964)
     sug_bin_inv = conf_tarj_inv * 0.964
     usdt_fin = st.number_input(f"👉 USDT recuperados reales (≈₮{sug_bin_inv:,.2f}):", value=float(f"{sug_bin_inv:.2f}"), step=1.0)
 
@@ -153,9 +168,10 @@ else:
     h_cap, h_usd, h_usdt, h_bs = bs_inv, usd_banco_inv, usdt_ini, conf_bs_inv
     usd_banco = usd_banco_inv
 
+# Radar con la tarjeta seleccionada integrada
 c_bs_teo = h_cap
 u_base_teo = max(0.0, (usd_banco-0.30) if dej_usd else usd_banco)
-u_fin_teo = u_base_teo * 0.975 * 0.964
+u_fin_teo = u_base_teo * factor_tarjeta * 0.964
 t_sug = (c_bs_teo*1.02)/u_fin_teo if u_fin_teo>0 else 0
 bs_rec_teo = u_fin_teo * tasa_v
 g_bs_teo = bs_rec_teo - c_bs_teo
@@ -252,14 +268,4 @@ with st.expander("📅 CENTRO DE RÉCORDS Y AUDITORÍA"):
         st.markdown("<hr style='border-color:rgba(128,128,128,0.2);'>", unsafe_allow_html=True)
         cd1, cd2 = st.columns(2)
         with cd1:
-            if st.button("🗑️ Borrar Última Vuelta", use_container_width=True):
-                if not st.session_state.historial_df.empty:
-                    st.session_state.historial_df = st.session_state.historial_df.iloc[:-1]
-                    st.session_state.historial_df.to_csv(archivo_historial, index=False)
-                    archivo_diario = os.path.join(carpeta_backups, f"historial_{hoy_str}.csv")
-                    df_diario = st.session_state.historial_df[st.session_state.historial_df['Día'] == hoy_str]
-                    df_diario.to_csv(archivo_diario, index=False)
-                    st.rerun()
-        with cd2:
-            if st.button("🚨 Reiniciar Base de Datos", use_container_width=True):
-                st.session_state.historial_df = pd.D
+            if st.button("🗑️ Borrar Última Vuelta", use_container
