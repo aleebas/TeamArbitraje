@@ -23,8 +23,8 @@ st.markdown("<hr style='margin:10px 0;'>", unsafe_allow_html=True)
 # --- SELECTORES DE RUTA Y COMISIONES ---
 col_b, col_t, col_p = st.columns(3)
 with col_b:
-    banco = st.radio("🏦 Banco Origen:", ["BDV (0.5%)", "Bancamiga (0.8%)"])
-    tasa_asignacion = 1.005 if "BDV" in banco else 1.008
+    banco = st.radio("🏦 Banco Origen:", ["BDV (0.5%)", "Bancamiga (0.5%)"])
+    tasa_asignacion = 1.005 if "BDV" in banco else 1.005
 
 with col_t:
     if "BDV" in banco:
@@ -135,7 +135,7 @@ c_roi = '#ef4444' if roi_teo < 2 else '#10b981'
 ruta_detallada_radar = f"{banco} ➡️ {tarjeta.split(' -')[0]} ➡️ {plataforma}"
 
 # AQUÍ SE INTEGRA LA TASA DE COMPRA Y VENTA DIRECTO EN EL RADAR
-radar_html = f"<div style='background-color: var(--secondary-background-color); border:1px solid rgba(16,185,129,.3); padding:12px; border-radius:12px; margin:5px 0 15px;'><p style='margin:0;font-size:11px;color:#6b7280;'>🔍 RADAR PROYECTIVO (Monto Base: Bs. {h_cap:,.2f} | ${usd_banco:,.2f})</p><p style='margin:0;font-size:10px;color:#a855f7;font-weight:800;margin-bottom:8px;'>⚙️ MÉTODO: {ruta_detallada_radar}</p><div style='display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed rgba(128,128,128,0.2); padding-bottom:5px;'><span style='font-size:11px; color:#6b7280;'>📉 Compra: <b style='color:var(--text-color);'>Bs.{tasa_c:,.2f}</b></span><span style='font-size:11px; color:#6b7280;'>📈 Venta P2P: <b style='color:var(--text-color);'>Bs.{tasa_v:,.2f}</b></span></div><div style='display:flex;justify-content:space-between;margin-top:5px;'><div><p style='margin:0;font-size:13px;color:var(--text-color);'>🎯 Tasa sugerida (2%): <b style='color:#f59e0b;'>Bs.{t_sug:,.2f}</b></p><p style='margin:0;font-size:13px;color:var(--text-color);'>📊 ROI Teórico: <b style='color:{c_roi};'>{roi_teo:,.2f}%</b></p></div><div style='text-align:right;'><p style='margin:0;font-size:10px;color:#6b7280;'>GANANCIA PROYECTADA</p><p style='margin:0;font-size:16px;font-weight:900;color:#0ea5e9;'>Bs.{g_bs_teo:,.2f}</p><p style='margin:0;font-size:13px;color:#10b981;'>≈₮{g_u_teo:,.2f}</p></div></div></div>"
+radar_html = f"<div style='background-color: var(--secondary-background-color); border:1px solid rgba(16,185,129,.3); padding:12px; border-radius:12px; margin:5px 0 15px;'><p style='margin:0;font-size:11px;color:#6b7280;'>🔍 RADAR PROYECTIVO (Monto Base: Bs. {h_cap:,.2f} | ${usd_banco:,.2f})</p><p style='margin:0;font-size:10px;color:#a855f7;font-weight:800;margin-bottom:8px;'>⚙️ MÉTODO: {ruta_detallada_radar}</p><div style='display:flex; justify-content:space-between; margin-bottom:8px; border-bottom:1px dashed rgba(128,128,128,0.2); padding-bottom:5px;'><span style='font-size:11px; color:#6b7280;'>📉 Compra: <b style='color:var(--text-color);'>Bs.{tasa_c:,.2f}</b></span><span style='font-size:11px; color:#6b7280;'>📈 Venta P2P: <b style='color:var(--text-color);'>Bs.{tasa_v:,.2f}</b></span></div><div style='display:flex;justify-content:space-between;margin-top:5px;'><div><p style='margin:0;font-size:13px;color:var(--text-color);'>🎯 Tasa sugerida para 2%: <b style='color:#f59e0b;'>Bs.{t_sug:,.2f}</b></p><p style='margin:0;font-size:13px;color:var(--text-color);'>📊 ROI Teórico de la vuelta: <b style='color:{c_roi};'>{roi_teo:,.2f}%</b></p></div><div style='text-align:right;'><p style='margin:0;font-size:10px;color:#6b7280;'>GANANCIA PROYECTADA</p><p style='margin:0;font-size:16px;font-weight:900;color:#0ea5e9;'>Bs.{g_bs_teo:,.2f}</p><p style='margin:0;font-size:13px;color:#10b981;'>≈₮{g_u_teo:,.2f}</p></div></div></div>"
 radar_placeholder.markdown(radar_html, unsafe_allow_html=True)
 
 # --- MÉTRICAS FINALES REALES Y GUARDADO ---
